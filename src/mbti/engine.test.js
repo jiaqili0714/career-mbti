@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ACHIEVEMENTS,evaluateAchievements} from './achievements.js';
 import {ARCHETYPES,CHOICE_REACTIONS,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
-import {EMPTY_SCORES,addScores,getResult,getType,isValidQuiz,createInitialQuiz,selectTiebreakers} from './engine.js';
+import {EMPTY_SCORES,addQuestionScore,addScores,getChoiceScore,getResult,getType,isValidQuiz,createInitialQuiz,selectTiebreakers} from './engine.js';
 import {getShareText,getShareUrl,getXShareUrl} from './share.js';
 
 test('question bank has 20 core questions and an adaptive pool for every axis',()=>{
@@ -32,10 +32,29 @@ test('all 16 MBTI results resolve to a unique archetype',()=>{
 });
 test('score reducer is immutable and adaptive questions prioritize closest axes',()=>{
   const base={...EMPTY_SCORES,ei:9,sn:1,tf:-7,jp:2};const next=addScores(base,{sn:-2,jp:1});assert.notEqual(next,base);assert.equal(base.sn,1);assert.equal(next.sn,-1);
-  const selected=selectTiebreakers(base);assert.equal(selected.length,4);assert.ok(selected[0].id.startsWith('tie-sn'));assert.equal(new Set(selected.map(item=>item.id)).size,4);
+  const selected=selectTiebreakers(base);assert.equal(selected.length,4);assert.equal(selected[0].id,'tie-sn-2');assert.equal(new Set(selected.map(item=>item.id)).size,4);
 });
-test('saved quiz schema includes persistent achievements and rejects malformed state',()=>{
-  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:1}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
+test('each question is score-centered so its answer set has no built-in letter bias',()=>{
+  for(const question of [...CORE_QUESTIONS,...TIEBREAKERS])for(const axis of ['ei','sn','tf','jp']){
+    const total=question.choices.reduce((sum,_,index)=>sum+getChoiceScore(question,index)[axis],0);
+    assert.ok(Math.abs(total)<1e-9,`${question.id} should be centered on ${axis}`);
+  }
+});
+test('calibrated random answer patterns produce a meaningfully differentiated result set',()=>{
+  let seed=20260922;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  const counts=new Map();const runs=30000;
+  for(let run=0;run<runs;run++){
+    let scores={...EMPTY_SCORES};
+    for(const question of CORE_QUESTIONS)scores=addQuestionScore(scores,question,Math.floor(random()*4));
+    for(const question of selectTiebreakers(scores))scores=addQuestionScore(scores,question,Math.floor(random()*4));
+    const type=getType(scores);counts.set(type,(counts.get(type)||0)+1);
+  }
+  assert.equal(counts.size,16);
+  assert.ok(Math.max(...counts.values())/runs<0.13);
+  assert.ok(Math.min(...counts.values())/runs>0.025);
+});
+test('saved quiz schema includes persistent achievements and rejects old scoring state',()=>{
+  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,3);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:2}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
 });
 test('achievement catalogue has unique ids and public unlock conditions',()=>{
   assert.equal(ACHIEVEMENTS.length,10);assert.equal(new Set(ACHIEVEMENTS.map(item=>item.id)).size,10);

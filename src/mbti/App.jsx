@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {ACHIEVEMENTS,ACHIEVEMENT_BY_ID,evaluateAchievements} from './achievements.js';
 import {ARCHETYPES,CHOICE_REACTIONS,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
-import {QUIZ_SAVE_KEY,addScores,createInitialQuiz,getResult,isValidQuiz,selectTiebreakers} from './engine.js';
+import {QUIZ_SAVE_KEY,addQuestionScore,createInitialQuiz,getResult,isValidQuiz,selectTiebreakers} from './engine.js';
 import {createResultCard,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import './mbti.css';
 import './share.css';
@@ -13,6 +13,7 @@ const NAV=[['start','开始测试',0,0],['profile','我的档案',1,0],['atlas',
 function loadQuiz(){
   try{
     const saved=JSON.parse(localStorage.getItem(QUIZ_SAVE_KEY));
+    if(saved?.version===2)return {...createInitialQuiz(),discovered:Array.isArray(saved.discovered)?saved.discovered:[],earned:Array.isArray(saved.earned)?saved.earned:[]};
     const migrated=saved?{...saved,earned:Array.isArray(saved.earned)?saved.earned:[],newAwards:Array.isArray(saved.newAwards)?saved.newAwards:[]}:saved;
     return isValidQuiz(migrated)?migrated:createInitialQuiz();
   }
@@ -39,7 +40,7 @@ function App(){
   function choose(choiceIndex){
     if(selected!==null||!question)return;
     const choice=question.choices[choiceIndex];
-    const scores=addScores(quiz.scores,choice.score);
+    const scores=addQuestionScore(quiz.scores,question,choiceIndex);
     const answers=[...quiz.answers,{id:question.id,choice:choiceIndex}];
     const nextIndex=quiz.index+1;
     const completed=nextIndex>=24;
@@ -126,7 +127,7 @@ function Result({result,onReset}){
 }
 
 function ShareSheet({result,onClose}){
-  const [status,setStatus]=useState('系统分享会尝试附上海报、文案和链接；如果应用只收图片，完整文案也会先复制好。');
+  const [status,setStatus]=useState('选一个出口，让同事看看公司把你养成了什么东西。');
   const [busy,setBusy]=useState(false);
   const [cardFile,setCardFile]=useState(null);
   useEffect(()=>{const close=event=>event.key==='Escape'&&onClose();window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[onClose]);
@@ -169,7 +170,7 @@ function ShareSheet({result,onClose}){
       <header><div><span>SHARE_RESULT.EXE</span><h2 id="share-title">把工伤鉴定发出去</h2></div><button onClick={onClose} aria-label="关闭分享">×</button></header>
       <div className="share-layout">
         <div className="share-preview"><div className="share-preview-top">职场异变图鉴 <small>异常员工档案</small></div><div className="share-preview-person"><Portrait index={result.index}/><div><b>{result.name}</b><span>{result.type}</span><p>{result.verdict}</p></div></div><dl><div><dt>生存方式</dt><dd>{result.survival}</dd></div><div><dt>耗尽现场</dt><dd>{result.drain}</dd></div></dl><footer>本测试不改善命运，只负责命名。</footer></div>
-        <div className="share-controls"><p>怎么发</p><div className="platform-grid"><button className="system-share" disabled={busy||!cardFile} onClick={systemShare}>{cardFile?'系统分享：海报 + 文案 + 链接':'正在准备分享材料…'}</button><button disabled={busy} onClick={shareX}>发到 X</button></div><small className="share-note">网页不能替你指定微信或朋友圈；系统会让你选择已安装的应用。</small><div className="share-tools"><button disabled={busy||!cardFile} onClick={downloadCard}>保存结果海报</button><button disabled={busy} onClick={copyText}>复制有梗文案 + 链接</button></div><output aria-live="polite">{busy?'系统正在移交这份职业污染报告……':status}</output></div>
+        <div className="share-controls"><p>怎么发</p><div className="platform-grid"><button className="system-share" disabled={busy||!cardFile} onClick={systemShare}>{cardFile?'分享我的结果':'正在准备分享材料…'}</button><button disabled={busy} onClick={shareX}>发布到 X</button></div><small className="share-note">微信、朋友圈等，请在分享面板中选择。</small><div className="share-tools"><button disabled={busy||!cardFile} onClick={downloadCard}>保存结果卡</button><button disabled={busy} onClick={copyText}>复制分享内容</button></div><output aria-live="polite">{busy?'系统正在移交这份职业污染报告……':status}</output></div>
       </div>
     </section>
   </div>
