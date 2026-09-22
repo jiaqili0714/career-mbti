@@ -1,0 +1,6 @@
+.mbti-app,.pixel-icon{background-image:url('/assets/mbti-icons.webp')}
+.pixel-portrait{background-image:url('/assets/mbti-portraits.webp')}
+.share-preview-person>.pixel-portrait{display:block;width:100%;background-color:transparent;background-image:url('/assets/mbti-portraits.webp');background-repeat:no-repeat;background-size:400% 400%;background-position:calc(var(--portrait-col)*100%/3) calc(var(--portrait-row)*100%/3)}
+.share-preview-person>div>b,.share-preview-person>div>span{display:block}
+.share-preview-person>div>b{font-family:'ZCOOL QingKe HuangYou';font-size:30px}
+.share-preview-person>div>span{width:max-content;background:#174b73;color:white;padding:3px 8px;font-size:11px}
