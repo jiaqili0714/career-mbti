@@ -11,6 +11,7 @@ import './share.css';
 const QUESTION_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map(item=>[item.id,item]));
 const QUESTION_ORDER_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map((item,index)=>[item.id,index%4]));
 const NAV=[['start','开始测试','TAKE THE TEST',0,0],['profile','我的档案','MY FILE',1,0],['atlas','人格图鉴','TYPE INDEX',2,0],['medals','工伤勋章','WORKPLACE SCARS',3,0],['exit','离职遗言','EXIT INTERVIEW',0,1]];
+const GITHUB_PROJECT_URL='https://github.com/jiaqili0714/career-mbti';
 const TOTAL_QUESTIONS=28;
 
 function loadQuiz(){
@@ -79,6 +80,7 @@ function App(){
     <header className="mbti-header">
       <div className="mbti-wordmark"><strong>{tr('wordmark','职场异变图鉴')}</strong><span>{tr('subtitle','测测你会进化成哪一种公司物种')}</span></div>
       <button className="language-switch" onClick={()=>setLanguage(current=>current==='zh'?'en':'zh')} aria-label={tr('langLabel','切换语言')}>{language==='zh'?'EN':'中文'}</button>
+      <a className="github-star" href={GITHUB_PROJECT_URL} target="_blank" rel="noreferrer"><span aria-hidden="true">★</span>{tr('githubStar','喜欢的话，去 GitHub 点个 Star')}</a>
       <div className="hr-stamp"><CopyLines text={tr('hr','本测试不改善命运，\n只负责命名。')}/><small>{tr('hrBy','— 人力资源部')}</small></div>
       <div className="meeting-note"><CopyLines text={tr('meeting','周一例会 09:00\n请准时参加')}/><small>{tr('admin','— 行政部')}</small></div>
     </header>

@@ -4,7 +4,7 @@
 
 支持简体中文和 English：首次访问根据浏览器语言自动选择，也可以随时在页面右上角切换。
 
-[在线体验](https://career-mbti.qiqi7714.chatgpt.site)
+[在线体验](https://career-mbti-beta.vercel.app) · [English README](./README.en.md)
 
 ## 功能
 
