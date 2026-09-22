@@ -5,6 +5,15 @@ export const AXES = [
   { key: 'jp', left: 'J', right: 'P', leftLabel: '尽早定形', rightLabel: '保留余地' },
 ];
 
+// Each core scene measures one preference only. A capable workplace response
+// should not accidentally cast three votes for S, T and J at once.
+export const CORE_AXIS_BY_ID = Object.freeze({
+  'first-day':'ei',gossip:'ei','cold-chat':'ei',lunch:'ei',celebration:'ei',
+  ambition:'sn','vague-brief':'sn',competitor:'sn',data:'sn',airdrop:'sn',
+  'equal-pay':'tf',success:'tf',screenshot:'tf','new-tool':'tf',layoff:'tf',
+  credit:'jp',collapse:'jp','bad-idea':'jp',friday:'jp',parallel:'jp',
+});
+
 const q = (id, chapter, scene, prompt, reaction, choices) => ({ id, chapter, scene, prompt, reaction, choices });
 const c = (text, score) => ({ text, score });
 
@@ -159,8 +168,8 @@ const FIXED_QUESTION_CANDIDATES = [
   ]),
 ];
 
-// Twenty fixed questions keep the first part consistent; the last four are
-// selected from the tiebreaker pool at runtime based on the closest axes.
+// Twenty fixed questions keep the first part consistent; the last eight are
+// ordered from the tiebreaker pool at runtime based on the closest axes.
 export const CORE_QUESTIONS = FIXED_QUESTION_CANDIDATES.filter(item=>
   !['networking','empty-slide','apology','deadline'].includes(item.id)
 );

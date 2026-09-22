@@ -8,12 +8,14 @@ import './mbti.css';
 import './share.css';
 
 const QUESTION_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map(item=>[item.id,item]));
+const QUESTION_ORDER_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map((item,index)=>[item.id,index%4]));
 const NAV=[['start','开始测试',0,0],['profile','我的档案',1,0],['atlas','人格图鉴',2,0],['medals','工伤勋章',3,0],['exit','离职遗言',0,1]];
+const TOTAL_QUESTIONS=28;
 
 function loadQuiz(){
   try{
     const saved=JSON.parse(localStorage.getItem(QUIZ_SAVE_KEY));
-    if(saved?.version===2)return {...createInitialQuiz(),discovered:Array.isArray(saved.discovered)?saved.discovered:[],earned:Array.isArray(saved.earned)?saved.earned:[]};
+    if([2,3].includes(saved?.version))return {...createInitialQuiz(),discovered:Array.isArray(saved.discovered)?saved.discovered:[],earned:Array.isArray(saved.earned)?saved.earned:[]};
     const migrated=saved?{...saved,earned:Array.isArray(saved.earned)?saved.earned:[],newAwards:Array.isArray(saved.newAwards)?saved.newAwards:[]}:saved;
     return isValidQuiz(migrated)?migrated:createInitialQuiz();
   }
@@ -43,7 +45,7 @@ function App(){
     const scores=addQuestionScore(quiz.scores,question,choiceIndex);
     const answers=[...quiz.answers,{id:question.id,choice:choiceIndex}];
     const nextIndex=quiz.index+1;
-    const completed=nextIndex>=24;
+    const completed=nextIndex>=TOTAL_QUESTIONS;
     const final=completed?getResult(scores):null;
     const discovered=completed?[...new Set([...quiz.discovered,final.index])]:quiz.discovered;
     const earnedNow=evaluateAchievements({answers,completed,discovered});
@@ -54,7 +56,7 @@ function App(){
     window.setTimeout(()=>{
       setQuiz(current=>{
         let questions=current.questions;
-        if(current.index===CORE_QUESTIONS.length-1)questions=[...questions,...selectTiebreakers(scores).map(item=>item.id)];
+        if(current.index===CORE_QUESTIONS.length-1)questions=[...questions,...selectTiebreakers(scores,TOTAL_QUESTIONS-CORE_QUESTIONS.length).map(item=>item.id)];
         const earned=[...new Set([...current.earned,...earnedNow])];
         const newAwards=[...new Set([...current.newAwards,...unlockedNow])];
         if(completed)return {...current,phase:'result',scores,answers,index:nextIndex,questions,discovered,earned,newAwards,reaction:null,result:final};
@@ -94,20 +96,23 @@ function App(){
 function Intro({onStart,hasProgress,onResume}){
   return <section className="intro-screen">
     <div className="office-visual"><img src="/assets/mbti-office.webp" alt="办公室里，两位同事在复印机旁低声交谈，一位新人独自坐在工位上。"/><div className="system-caption">人力系统正在识别可替换部件……</div></div>
-    <div className="intro-copy"><span className="eyebrow">公司物种鉴定 · 24 道情境</span><h1>欢迎入职。<br/>请暴露你的第一反应。</h1><p>别选“正确答案”。选老板突然点你名时，你的手、嘴和脑子最先干的那件事。每完成一次测试，只解锁本次鉴定出的公司物种。</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>开始接受鉴定 →</button>{hasProgress?<button className="text-action" onClick={onResume}>继续上次工伤</button>:null}</div><small>预计 4–6 分钟 · 一次解锁一种 · 图鉴永久保存在本机</small></div>
+    <div className="intro-copy"><span className="eyebrow">公司物种鉴定 · 28 道情境</span><h1>欢迎入职。<br/>请暴露你的第一反应。</h1><p>别选“正确答案”。选老板突然点你名时，你的手、嘴和脑子最先干的那件事。每完成一次测试，只解锁本次鉴定出的公司物种。</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>开始接受鉴定 →</button>{hasProgress?<button className="text-action" onClick={onResume}>继续上次工伤</button>:null}</div><small>预计 5–7 分钟 · 一次解锁一种 · 图鉴永久保存在本机</small></div>
   </section>
 }
 
 function Question({question,quiz,selected,reaction,onChoose}){
   if(!question)return null;
-  const progress=Math.round((quiz.index/24)*100);
+  const progress=Math.round((quiz.index/TOTAL_QUESTIONS)*100);
+  const offset=QUESTION_ORDER_BY_ID.get(question.id)||0;
+  const choices=question.choices.map((choice,index)=>({choice,index}));
+  const displayedChoices=[...choices.slice(offset),...choices.slice(0,offset)];
   return <section className="question-screen">
     <div className="scene-frame"><img src="/assets/mbti-office.webp" alt="像素风办公室情境"/><div className="scene-status"><span>求生欲 +{Math.max(1,Math.ceil(quiz.index/6))}</span><small>你的工位比你先转正</small></div></div>
     <div className="question-paper">
-      <div className="question-meta"><span>{question.chapter}</span><strong>{String(quiz.index+1).padStart(2,'0')} / 24</strong></div>
+      <div className="question-meta"><span>{question.chapter}</span><strong>{String(quiz.index+1).padStart(2,'0')} / {TOTAL_QUESTIONS}</strong></div>
       <div className="progress-track"><span style={{width:`${progress}%`}}/></div>
       <p className="scene-line">{question.scene}</p><h2>{question.prompt}</h2>
-      <div className="choice-grid">{question.choices.map((choice,index)=><button key={choice.text} disabled={selected!==null} className={selected===index?'selected':''} onClick={()=>onChoose(index)}><span>{String.fromCharCode(65+index)}</span><b>{choice.text}</b></button>)}</div>
+      <div className="choice-grid">{displayedChoices.map(({choice,index},displayIndex)=><button key={choice.text} disabled={selected!==null} className={selected===index?'selected':''} onClick={()=>onChoose(index)}><span>{String.fromCharCode(65+displayIndex)}</span><b>{choice.text}</b></button>)}</div>
       <div className={`reaction-line${reaction?' visible':''}`}>{reaction||'选择不会改变命运，只会改变甩锅路径。'}</div>
     </div>
   </section>
@@ -182,7 +187,7 @@ function Atlas({quiz}){
 
 function Panel({id,quiz,onClose,onReset}){
   const content={
-    profile:<><h2>我的档案</h2><p className="panel-lead">系统只展示行为痕迹，不提前泄露字母。</p><dl><div><dt>本轮已完成</dt><dd>{quiz.answers.length} / 24</dd></div><div><dt>永久图鉴</dt><dd>{quiz.discovered.length} / 16</dd></div><div><dt>工伤认定</dt><dd>{quiz.earned.length} / {ACHIEVEMENTS.length}</dd></div><div><dt>组织评价</dt><dd>{quiz.answers.length>12?'已具备被追加工作的潜力':'仍在低成本观察期'}</dd></div></dl></>,
+    profile:<><h2>我的档案</h2><p className="panel-lead">系统只展示行为痕迹，不提前泄露字母。</p><dl><div><dt>本轮已完成</dt><dd>{quiz.answers.length} / {TOTAL_QUESTIONS}</dd></div><div><dt>永久图鉴</dt><dd>{quiz.discovered.length} / 16</dd></div><div><dt>工伤认定</dt><dd>{quiz.earned.length} / {ACHIEVEMENTS.length}</dd></div><div><dt>组织评价</dt><dd>{quiz.answers.length>14?'已具备被追加工作的潜力':'仍在低成本观察期'}</dd></div></dl></>,
     atlas:<><h2>人格图鉴</h2><p className="panel-lead">每完成一次测试，只解锁最终鉴定出的那一种；重测才会继续补全。</p><div className="panel-atlas">{ARCHETYPES.map(item=><div key={item.type}><Portrait index={item.index} locked={!quiz.discovered.includes(item.index)}/><b>{quiz.discovered.includes(item.index)?item.name:'身份待定'}</b><small>{quiz.discovered.includes(item.index)?item.type:'????'}</small></div>)}</div></>,
     medals:<><h2>工伤勋章</h2><p className="panel-lead">按你的具体选择解锁，跨局永久保留。当前认定 {quiz.earned.length} / {ACHIEVEMENTS.length} 项工伤。</p><div className="achievement-grid">{ACHIEVEMENTS.map(item=>{const open=quiz.earned.includes(item.id);return <article key={item.id} className={open?'earned':'locked'}><span className="achievement-stamp">{open?item.stamp:'??'}</span><div><b>{open?item.name:'尚未认定'}</b><small>{item.condition}</small><p>{open?item.description:'人力资源部称：证据链仍不完整。'}</p></div></article>})}</div></>,
     exit:<><h2>离职遗言</h2><blockquote>“感谢平台，感谢培养。附件是我保存的全部聊天记录。”</blockquote><p className="panel-lead">放心，这只是一个按钮。你仍需完成本周交付。</p><button className="danger-action" onClick={onReset}>清除档案并模拟离职</button></>,

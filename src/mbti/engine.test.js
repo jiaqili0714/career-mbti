@@ -8,6 +8,7 @@ import {getShareText,getShareUrl,getXShareUrl} from './share.js';
 test('question bank has 20 core questions and an adaptive pool for every axis',()=>{
   assert.equal(CORE_QUESTIONS.length,20);
   assert.equal(TIEBREAKERS.length,8);
+  assert.equal(CORE_QUESTIONS.length+TIEBREAKERS.length,28);
   for(const axis of ['ei','sn','tf','jp'])assert.equal(TIEBREAKERS.filter(item=>item.id.startsWith(`tie-${axis}`)).length,2);
   for(const item of [...CORE_QUESTIONS,...TIEBREAKERS]){assert.equal(item.choices.length,4);assert.ok(item.reaction.length>12);}
 });
@@ -26,18 +27,27 @@ test('every playable choice has a distinct scene reaction and revised prompts st
 });
 test('all 16 MBTI results resolve to a unique archetype',()=>{
   assert.equal(ARCHETYPES.length,16);assert.equal(new Set(ARCHETYPES.map(item=>item.type)).size,16);
+  assert.equal(getType({...EMPTY_SCORES}),'ISFJ');
   for(const e of [-1,1])for(const s of [-1,1])for(const t of [-1,1])for(const j of [-1,1]){
     const scores={ei:e,sn:s,tf:t,jp:j};const type=getType(scores);assert.equal(getResult(scores).type,type);
   }
 });
 test('score reducer is immutable and adaptive questions prioritize closest axes',()=>{
   const base={...EMPTY_SCORES,ei:9,sn:1,tf:-7,jp:2};const next=addScores(base,{sn:-2,jp:1});assert.notEqual(next,base);assert.equal(base.sn,1);assert.equal(next.sn,-1);
-  const selected=selectTiebreakers(base);assert.equal(selected.length,4);assert.equal(selected[0].id,'tie-sn-2');assert.equal(new Set(selected.map(item=>item.id)).size,4);
+  const selected=selectTiebreakers(base);assert.equal(selected.length,8);assert.equal(selected[0].id,'tie-sn-2');assert.equal(selected[4].id,'tie-sn-1');assert.equal(new Set(selected.map(item=>item.id)).size,8);
 });
 test('each question is score-centered so its answer set has no built-in letter bias',()=>{
   for(const question of [...CORE_QUESTIONS,...TIEBREAKERS])for(const axis of ['ei','sn','tf','jp']){
     const total=question.choices.reduce((sum,_,index)=>sum+getChoiceScore(question,index)[axis],0);
     assert.ok(Math.abs(total)<1e-9,`${question.id} should be centered on ${axis}`);
+  }
+});
+test('a core workplace answer can influence only its intended preference pair',()=>{
+  for(const question of CORE_QUESTIONS){
+    for(let index=0;index<question.choices.length;index++){
+      const score=getChoiceScore(question,index);
+      assert.equal(Object.values(score).filter(value=>value!==0).length<=1,true,`${question.id} choice ${index} casts more than one vote`);
+    }
   }
 });
 test('calibrated random answer patterns produce a meaningfully differentiated result set',()=>{
@@ -54,7 +64,7 @@ test('calibrated random answer patterns produce a meaningfully differentiated re
   assert.ok(Math.min(...counts.values())/runs>0.025);
 });
 test('saved quiz schema includes persistent achievements and rejects old scoring state',()=>{
-  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,3);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:2}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
+  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,4);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:3}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
 });
 test('achievement catalogue has unique ids and public unlock conditions',()=>{
   assert.equal(ACHIEVEMENTS.length,10);assert.equal(new Set(ACHIEVEMENTS.map(item=>item.id)).size,10);
@@ -72,6 +82,7 @@ test('share helpers create platform-safe result copy and clean URLs',()=>{
   const result={name:'Excel 监工',type:'ESTJ',verdict:'你不是没有感情，感情只是尚未录入必填字段。'};
   assert.match(getShareText(result),/Excel 监工（ESTJ）/);
   assert.match(getShareText(result),/看看公司到底把你养成了什么东西/);
+  assert.match(getShareText(result),/28 道职场情境/);
   assert.ok(!getShareText(result).includes('你也来接受公司物种鉴定'));
   assert.equal(getShareUrl('https://example.com/mbti.html#result'),'https://example.com/mbti.html');
   const xUrl=new URL(getXShareUrl(result,'https://example.com/mbti.html'));
