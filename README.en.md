@@ -16,6 +16,9 @@ The site supports English and Simplified Chinese. It detects the browser languag
 - Responsive layouts for desktop and mobile
 - Browser-language detection with a manual language switch
 - Progress saved locally with `localStorage`
+- Optional privacy-minded warehouse for region, acquisition, active time, quiz progress, and result distribution
+
+See [ANALYTICS.md](./ANALYTICS.md) for setup and reporting instructions.
 
 ## Run locally
 
