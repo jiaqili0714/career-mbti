@@ -35,7 +35,11 @@ function App(){
   const [panel,setPanel]=useState(null);
   const [selected,setSelected]=useState(null);
   const [reaction,setReaction]=useState(null);
-  useEffect(()=>initAnalytics(),[]);
+  useEffect(()=>{
+    const cleanup=initAnalytics();
+    if(quiz.phase==='quiz')trackQuizStart(quiz.answers.length);
+    return cleanup;
+  },[]);
   useEffect(()=>{localStorage.setItem(QUIZ_SAVE_KEY,JSON.stringify(quiz));},[quiz]);
   useEffect(()=>{localStorage.setItem(LANGUAGE_KEY,language);document.documentElement.lang=language==='en'?'en':'zh-CN';},[language]);
   const tr=(key,zh)=>getUi(language,key)||zh;
