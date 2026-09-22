@@ -10,6 +10,10 @@ src/daily.js
 src/work.js
 src/ui/
 src/styles.css
+src/audio.js
+src/characters.js
+src/content.js
+src/story-helpers.js
 public/assets/avatar.png
 public/assets/cafe.png
 public/assets/characters.png
