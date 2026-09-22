@@ -4,3 +4,5 @@
 .share-preview-person>div>b,.share-preview-person>div>span{display:block}
 .share-preview-person>div>b{font-family:'ZCOOL QingKe HuangYou';font-size:30px}
 .share-preview-person>div>span{width:max-content;background:#174b73;color:white;padding:3px 8px;font-size:11px}
+.platform-grid .system-share{background:#dff1d0;border-color:#6b9c52}
+.share-note{display:block;margin-top:10px;color:#648098;font-size:10px;line-height:1.6}

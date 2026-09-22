@@ -1,5 +1,5 @@
 export function getShareText(result){
-  return `我的职场异变结果：${result.name}（${result.type}）\n${result.verdict}\n你也来接受公司物种鉴定：`;
+  return `我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n24 道职场情境，看看公司到底把你养成了什么东西。\n`;
 }
 
 export function getShareUrl(url=window.location.href){
@@ -9,7 +9,7 @@ export function getShareUrl(url=window.location.href){
 }
 
 export function getXShareUrl(result,url){
-  const text=`我的职场异变结果是「${result.name}」${result.type}。${result.verdict} #职场异变图鉴`;
+  const text=`我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n24 道题，看看公司把你养成了什么东西。 #职场异变图鉴`;
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 }
 

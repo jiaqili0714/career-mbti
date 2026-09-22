@@ -126,33 +126,42 @@ function Result({result,onReset}){
 }
 
 function ShareSheet({result,onClose}){
-  const [status,setStatus]=useState('手机会打开系统分享面板；电脑会保存海报并复制文案。');
+  const [status,setStatus]=useState('系统分享会尝试附上海报、文案和链接；如果应用只收图片，完整文案也会先复制好。');
   const [busy,setBusy]=useState(false);
+  const [cardFile,setCardFile]=useState(null);
   useEffect(()=>{const close=event=>event.key==='Escape'&&onClose();window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[onClose]);
+  useEffect(()=>{let active=true;createResultCard(result).then(blob=>{if(active)setCardFile(new File([blob],`职场异变图鉴-${result.type}.png`,{type:'image/png'}));}).catch(()=>{if(active)setStatus('海报导出临时罢工，但文案和链接仍然可以分享。');});return()=>{active=false;};},[result]);
   const shareUrl=getShareUrl();
   const shareText=getShareText(result);
 
+  function copyFallback(value){
+    const input=document.createElement('textarea');input.value=value;input.setAttribute('readonly','');input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();return copied;
+  }
   async function copyText(){
     const value=`${shareText}${shareUrl}`;
-    try{await navigator.clipboard.writeText(value);setStatus('文案和链接已复制。剩下的由群聊事故负责。');}
-    catch{const input=document.createElement('textarea');input.value=value;document.body.appendChild(input);input.select();document.execCommand('copy');input.remove();setStatus('文案和链接已复制。剩下的由群聊事故负责。');}
+    try{await navigator.clipboard.writeText(value);setStatus('完整文案和链接已复制。去群聊里投放这份职业污染报告吧。');}
+    catch{copyFallback(value);setStatus('完整文案和链接已复制。去群聊里投放这份职业污染报告吧。');}
   }
-  async function getCard(){const blob=await createResultCard(result);return new File([blob],`职场异变图鉴-${result.type}.png`,{type:'image/png'});}
   function download(file){const link=document.createElement('a');link.href=URL.createObjectURL(file);link.download=file.name;link.click();window.setTimeout(()=>URL.revokeObjectURL(link.href),1000);}
-  async function shareTo(target){
+  async function systemShare(){
     setBusy(true);
+    const fullText=`${shareText}${shareUrl}`;
+    copyFallback(fullText);
     try{
-      const file=await getCard();
-      if(navigator.share&&navigator.canShare?.({files:[file]})){
-        await navigator.share({files:[file],title:`我的职场异变结果：${result.name}`,text:`${shareText}${shareUrl}`});
-        setStatus(`系统已接手，请在面板里选择${target}。`);
+      if(navigator.share&&cardFile&&navigator.canShare?.({files:[cardFile]})){
+        await navigator.share({files:[cardFile],title:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
+        setStatus('系统分享已打开。若对方只收到图片，文案和链接已经复制，直接粘贴即可。');
+      }else if(navigator.share){
+        await navigator.share({title:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
+        setStatus('系统分享已打开；完整文案和链接也已经复制。');
       }else{
-        download(file);await copyText();setStatus(`海报已保存、文案已复制。打开${target}即可发布。`);
+        if(cardFile)download(cardFile);
+        setStatus('浏览器不支持系统分享：海报已保存，完整文案和链接已复制。');
       }
-    }catch(error){if(error?.name!=='AbortError')setStatus('分享面板临时罢工了，请使用“保存海报”或“复制文案”。');}
+    }catch(error){if(error?.name!=='AbortError')setStatus('系统分享临时罢工了，请使用“保存海报”或“复制完整文案”。');}
     finally{setBusy(false);}
   }
-  async function downloadCard(){setBusy(true);try{download(await getCard());setStatus('结果海报已保存。它比年终总结更适合公开。');}finally{setBusy(false);}}
+  function downloadCard(){if(!cardFile)return;download(cardFile);setStatus('结果海报已保存。它比年终总结更适合公开。');}
   function shareX(){window.open(getXShareUrl(result,shareUrl),'_blank','noopener,noreferrer');setStatus('已打开 X 发布页，文字和链接已经填好。');}
 
   return <div className="share-backdrop" role="presentation" onMouseDown={event=>event.target===event.currentTarget&&onClose()}>
@@ -160,7 +169,7 @@ function ShareSheet({result,onClose}){
       <header><div><span>SHARE_RESULT.EXE</span><h2 id="share-title">把工伤鉴定发出去</h2></div><button onClick={onClose} aria-label="关闭分享">×</button></header>
       <div className="share-layout">
         <div className="share-preview"><div className="share-preview-top">职场异变图鉴 <small>异常员工档案</small></div><div className="share-preview-person"><Portrait index={result.index}/><div><b>{result.name}</b><span>{result.type}</span><p>{result.verdict}</p></div></div><dl><div><dt>生存方式</dt><dd>{result.survival}</dd></div><div><dt>耗尽现场</dt><dd>{result.drain}</dd></div></dl><footer>本测试不改善命运，只负责命名。</footer></div>
-        <div className="share-controls"><p>选择去向</p><div className="platform-grid"><button disabled={busy} onClick={()=>shareTo('微信')}>微信</button><button disabled={busy} onClick={()=>shareTo('朋友圈')}>朋友圈</button><button disabled={busy} onClick={()=>shareTo('Instagram')}>Instagram</button><button disabled={busy} onClick={shareX}>X / Twitter</button><button disabled={busy} onClick={()=>shareTo('Messages')}>Messages</button></div><div className="share-tools"><button disabled={busy} onClick={downloadCard}>保存海报</button><button disabled={busy} onClick={copyText}>复制文案 + 链接</button></div><output aria-live="polite">{busy?'人力资源部正在导出你的可传播证据……':status}</output></div>
+        <div className="share-controls"><p>怎么发</p><div className="platform-grid"><button className="system-share" disabled={busy||!cardFile} onClick={systemShare}>{cardFile?'系统分享：海报 + 文案 + 链接':'正在准备分享材料…'}</button><button disabled={busy} onClick={shareX}>发到 X</button></div><small className="share-note">网页不能替你指定微信或朋友圈；系统会让你选择已安装的应用。</small><div className="share-tools"><button disabled={busy||!cardFile} onClick={downloadCard}>保存结果海报</button><button disabled={busy} onClick={copyText}>复制有梗文案 + 链接</button></div><output aria-live="polite">{busy?'系统正在移交这份职业污染报告……':status}</output></div>
       </div>
     </section>
   </div>

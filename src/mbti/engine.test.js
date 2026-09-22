@@ -52,6 +52,8 @@ test('completion, behavior and collection achievements use distinct evidence',()
 test('share helpers create platform-safe result copy and clean URLs',()=>{
   const result={name:'Excel 监工',type:'ESTJ',verdict:'你不是没有感情，感情只是尚未录入必填字段。'};
   assert.match(getShareText(result),/Excel 监工（ESTJ）/);
+  assert.match(getShareText(result),/看看公司到底把你养成了什么东西/);
+  assert.ok(!getShareText(result).includes('你也来接受公司物种鉴定'));
   assert.equal(getShareUrl('https://example.com/mbti.html#result'),'https://example.com/mbti.html');
   const xUrl=new URL(getXShareUrl(result,'https://example.com/mbti.html'));
   assert.equal(xUrl.hostname,'twitter.com');assert.equal(xUrl.pathname,'/intent/tweet');
