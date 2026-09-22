@@ -4,7 +4,7 @@ import {ACHIEVEMENTS,evaluateAchievements} from './achievements.js';
 import {ARCHETYPES,CHOICE_REACTIONS,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
 import {EMPTY_SCORES,addQuestionScore,addScores,getChoiceScore,getResult,getType,isValidQuiz,createInitialQuiz,selectTiebreakers} from './engine.js';
 import {getShareText,getShareUrl,getXShareUrl} from './share.js';
-import {getChoiceReaction,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
+import {getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
 
 test('question bank has 20 core questions and an adaptive pool for every axis',()=>{
   assert.equal(CORE_QUESTIONS.length,20);
@@ -84,7 +84,7 @@ test('share helpers create platform-safe result copy and clean URLs',()=>{
   assert.match(getShareText(result),/Excel 监工（ESTJ）/);
   assert.match(getShareText(result),/看看公司到底把你养成了什么东西/);
   assert.match(getShareText(result),/28 道职场情境/);
-  assert.match(getShareText(localizeArchetype({...result,index:10},'en'),'en'),/Work turned me into/);
+  assert.match(getShareText(localizeArchetype({...result,index:10},'en'),'en'),/My workplace personality is/);
   assert.ok(!getShareText(result).includes('你也来接受公司物种鉴定'));
   assert.equal(getShareUrl('https://example.com/mbti.html#result'),'https://example.com/mbti.html');
   const xUrl=new URL(getXShareUrl(result,'https://example.com/mbti.html'));
@@ -98,4 +98,6 @@ test('English localization covers every question, reaction, archetype and achiev
   }
   for(const item of ARCHETYPES)assert.notEqual(localizeArchetype(item,'en').name,item.name);
   for(const item of ACHIEVEMENTS)assert.notEqual(localizeAchievement(item,'en').name,item.name);
+  assert.equal(getUi('en','introTitle'),'WHAT ARE YOU ACTUALLY LIKE AT WORK?');
+  assert.doesNotMatch(getUi('en','introBody'),/hands, mouth|professional filter|correct answer/i);
 });

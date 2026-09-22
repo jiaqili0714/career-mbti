@@ -10,7 +10,7 @@ import './share.css';
 
 const QUESTION_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map(item=>[item.id,item]));
 const QUESTION_ORDER_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map((item,index)=>[item.id,index%4]));
-const NAV=[['start','开始测试','START TEST',0,0],['profile','我的档案','MY FILE',1,0],['atlas','人格图鉴','SPECIES ATLAS',2,0],['medals','工伤勋章','DAMAGE BADGES',3,0],['exit','离职遗言','EXIT INTERVIEW',0,1]];
+const NAV=[['start','开始测试','TAKE THE TEST',0,0],['profile','我的档案','MY FILE',1,0],['atlas','人格图鉴','TYPE INDEX',2,0],['medals','工伤勋章','WORKPLACE SCARS',3,0],['exit','离职遗言','EXIT INTERVIEW',0,1]];
 const TOTAL_QUESTIONS=28;
 
 function loadQuiz(){
@@ -25,6 +25,7 @@ function loadQuiz(){
 
 function PixelIcon({col,row}){return <span className="pixel-icon" style={{'--icon-col':col,'--icon-row':row}} aria-hidden="true"/>}
 function Portrait({index,locked=false}){return <span className={`pixel-portrait${locked?' locked':''}`} style={{'--portrait-col':index%4,'--portrait-row':Math.floor(index/4)}}/>}
+function CopyLines({text}){return text.split('\n').map((line,index)=><React.Fragment key={`${line}-${index}`}>{index>0?<br/>:null}{line}</React.Fragment>)}
 
 function App(){
   const [quiz,setQuiz]=useState(loadQuiz);
@@ -56,7 +57,7 @@ function App(){
     const earnedNow=evaluateAchievements({answers,completed,discovered});
     const unlockedNow=earnedNow.filter(id=>!quiz.earned.includes(id));
     const baseReaction=getChoiceReaction(question.id,choiceIndex,language)||question.reaction;
-    const unlockCopy=unlockedNow.length?(language==='en'?` | DAMAGE BADGE: ${unlockedNow.map(id=>localizeAchievement(ACHIEVEMENT_BY_ID.get(id),language).name).join(', ')}`:` ｜ 勋章解锁：${unlockedNow.map(id=>ACHIEVEMENT_BY_ID.get(id).name).join('、')}`):'';
+    const unlockCopy=unlockedNow.length?(language==='en'?` | ACHIEVEMENT UNLOCKED: ${unlockedNow.map(id=>localizeAchievement(ACHIEVEMENT_BY_ID.get(id),language).name).join(', ')}`:` ｜ 勋章解锁：${unlockedNow.map(id=>ACHIEVEMENT_BY_ID.get(id).name).join('、')}`):'';
     setSelected(choiceIndex);setReaction(`${baseReaction}${unlockCopy}`);
     window.setTimeout(()=>{
       setQuiz(current=>{
@@ -78,8 +79,8 @@ function App(){
     <header className="mbti-header">
       <div className="mbti-wordmark"><strong>{tr('wordmark','职场异变图鉴')}</strong><span>{tr('subtitle','测测你会进化成哪一种公司物种')}</span></div>
       <button className="language-switch" onClick={()=>setLanguage(current=>current==='zh'?'en':'zh')} aria-label={tr('langLabel','切换语言')}>{language==='zh'?'EN':'中文'}</button>
-      <div className="hr-stamp">{language==='en'?<>This test will not improve your fate.<br/>It will only name it.</>:<>本测试不改善命运，<br/>只负责命名。</>}<small>{tr('hrBy','— 人力资源部')}</small></div>
-      <div className="meeting-note">{language==='en'?<>MONDAY SYNC 09:00<br/>Attendance expected</>:<>周一例会 09:00<br/>请准时参加</>}<small>{tr('admin','— 行政部')}</small></div>
+      <div className="hr-stamp"><CopyLines text={tr('hr','本测试不改善命运，\n只负责命名。')}/><small>{tr('hrBy','— 人力资源部')}</small></div>
+      <div className="meeting-note"><CopyLines text={tr('meeting','周一例会 09:00\n请准时参加')}/><small>{tr('admin','— 行政部')}</small></div>
     </header>
 
     <div className="app-shell">
@@ -103,24 +104,25 @@ function Intro({language,onStart,hasProgress,onResume}){
   const tr=(key,zh)=>getUi(language,key)||zh;
   return <section className="intro-screen">
     <div className="office-visual"><img src="/assets/mbti-office.webp" alt={tr('introAlt','办公室里，两位同事在复印机旁低声交谈，一位新人独自坐在工位上。')}/><div className="system-caption">{tr('systemScanning','人力系统正在识别可替换部件……')}</div></div>
-    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 28 道情境')}</span><h1>{language==='en'?<>WELCOME ABOARD.<br/>PLEASE EXPOSE YOUR FIRST REACTION.</>:<>欢迎入职。<br/>请暴露你的第一反应。</>}</h1><p>{tr('introBody','别选“正确答案”。选老板突然点你名时，你的手、嘴和脑子最先干的那件事。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 5–7 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small></div>
+    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 28 道情境')}</span><h1><CopyLines text={tr('introTitle','欢迎入职。\n请暴露你的第一反应。')}/></h1><p>{tr('introBody','别选“正确答案”。选老板突然点你名时，你的手、嘴和脑子最先干的那件事。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 5–7 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small></div>
   </section>
 }
 
 function Question({language,question,quiz,selected,reaction,onChoose}){
+  const tr=(key,zh)=>getUi(language,key)||zh;
   if(!question)return null;
   const progress=Math.round((quiz.index/TOTAL_QUESTIONS)*100);
   const offset=QUESTION_ORDER_BY_ID.get(question.id)||0;
   const choices=question.choices.map((choice,index)=>({choice,index}));
   const displayedChoices=[...choices.slice(offset),...choices.slice(0,offset)];
   return <section className="question-screen">
-    <div className="scene-frame"><img src="/assets/mbti-office.webp" alt={language==='en'?'Pixel-art office scene':'像素风办公室情境'}/><div className="scene-status"><span>{language==='en'?'SURVIVAL INSTINCT':'求生欲'} +{Math.max(1,Math.ceil(quiz.index/6))}</span><small>{language==='en'?'Your desk passed probation first.':'你的工位比你先转正'}</small></div></div>
+    <div className="scene-frame"><img src="/assets/mbti-office.webp" alt={tr('sceneAlt','像素风办公室情境')}/><div className="scene-status"><span>{tr('survival','求生欲')} +{Math.max(1,Math.ceil(quiz.index/6))}</span><small>{tr('desk','你的工位比你先转正')}</small></div></div>
     <div className="question-paper">
       <div className="question-meta"><span>{question.chapter}</span><strong>{String(quiz.index+1).padStart(2,'0')} / {TOTAL_QUESTIONS}</strong></div>
       <div className="progress-track"><span style={{width:`${progress}%`}}/></div>
       <p className="scene-line">{question.scene}</p><h2>{question.prompt}</h2>
       <div className="choice-grid">{displayedChoices.map(({choice,index},displayIndex)=><button key={choice.text} disabled={selected!==null} className={selected===index?'selected':''} onClick={()=>onChoose(index)}><span>{String.fromCharCode(65+displayIndex)}</span><b>{choice.text}</b></button>)}</div>
-      <div className={`reaction-line${reaction?' visible':''}`}>{reaction||(language==='en'?'Your choice will not change fate—only the route the blame takes.':'选择不会改变命运，只会改变甩锅路径。')}</div>
+      <div className={`reaction-line${reaction?' visible':''}`}>{reaction||tr('idleReaction','选择不会改变命运，只会改变甩锅路径。')}</div>
     </div>
   </section>
 }
@@ -145,7 +147,7 @@ function ShareSheet({language,result,onClose}){
   const [busy,setBusy]=useState(false);
   const [cardFile,setCardFile]=useState(null);
   useEffect(()=>{const close=event=>event.key==='Escape'&&onClose();window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[onClose]);
-  useEffect(()=>{let active=true;createResultCard(result,language).then(blob=>{if(active)setCardFile(new File([blob],`${language==='en'?'Workplace-Mutation-Atlas':'职场异变图鉴'}-${result.type}.png`,{type:'image/png'}));}).catch(()=>{if(active)setStatus(language==='en'?'The result card is on strike, but the text and link still work.':'海报导出临时罢工，但文案和链接仍然可以分享。');});return()=>{active=false;};},[result,language]);
+  useEffect(()=>{let active=true;createResultCard(result,language).then(blob=>{if(active)setCardFile(new File([blob],`${language==='en'?'Office-Survival-Test':'职场异变图鉴'}-${result.type}.png`,{type:'image/png'}));}).catch(()=>{if(active)setStatus(language==='en'?'The result card could not be created, but you can still copy the text and link.':'海报导出临时罢工，但文案和链接仍然可以分享。');});return()=>{active=false;};},[result,language]);
   const shareUrl=getShareUrl();
   const shareText=getShareText(result,language);
 
@@ -164,10 +166,10 @@ function ShareSheet({language,result,onClose}){
     copyFallback(fullText);
     try{
       if(navigator.share&&cardFile&&navigator.canShare?.({files:[cardFile]})){
-        await navigator.share({files:[cardFile],title:language==='en'?`My workplace mutation: ${result.name}`:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
+        await navigator.share({files:[cardFile],title:language==='en'?`My workplace personality: ${result.name}`:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
         setStatus(tr('shareOpened','系统分享已打开。若对方只收到图片，文案和链接已经复制，直接粘贴即可。'));
       }else if(navigator.share){
-        await navigator.share({title:language==='en'?`My workplace mutation: ${result.name}`:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
+        await navigator.share({title:language==='en'?`My workplace personality: ${result.name}`:`我的职场异变结果：${result.name}`,text:shareText.trim(),url:shareUrl});
         setStatus(tr('shareNoFile','系统分享已打开；完整文案和链接也已经复制。'));
       }else{
         if(cardFile)download(cardFile);
@@ -192,7 +194,7 @@ function ShareSheet({language,result,onClose}){
 
 function Atlas({language,quiz}){
   const tr=(key,zh)=>getUi(language,key)||zh;
-  return <aside className="atlas"><header><b>{tr('identified','已鉴定物种')}</b><span>{quiz.discovered.length} / 16</span></header><div className="atlas-grid">{ARCHETYPES.map(item=>{const open=quiz.discovered.includes(item.index);const localized=localizeArchetype(item,language);return <button key={item.type} title={open?`${localized.name} / ${item.type}`:tr('completeToUnlock','完成测试后解锁')}><Portrait index={item.index} locked={!open}/><span>{open?localized.name:tr('locked','待鉴定')}</span></button>})}</div><p>{language==='en'?<>Each run records one result.<br/>Retake to fill the corporate ecosystem.</>:<>每次完成测试，只收录本次结果。<br/>重测可以补全你的公司生态。</>}</p></aside>
+  return <aside className="atlas"><header><b>{tr('identified','已鉴定物种')}</b><span>{quiz.discovered.length} / 16</span></header><div className="atlas-grid">{ARCHETYPES.map(item=>{const open=quiz.discovered.includes(item.index);const localized=localizeArchetype(item,language);return <button key={item.type} title={open?`${localized.name} / ${item.type}`:tr('completeToUnlock','完成测试后解锁')}><Portrait index={item.index} locked={!open}/><span>{open?localized.name:tr('locked','待鉴定')}</span></button>})}</div><p><CopyLines text={tr('atlasHint','每次完成测试，只收录本次结果。\n重测可以补全你的公司生态。')}/></p></aside>
 }
 
 function Panel({language,id,quiz,onClose,onReset}){
