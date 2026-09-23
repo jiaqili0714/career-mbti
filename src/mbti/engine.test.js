@@ -23,7 +23,7 @@ test('every playable choice has a distinct scene reaction and revised prompts st
   const coffee=CORE_QUESTIONS.find(item=>item.id==='competitor');
   assert.ok(coffee.scene.includes('咖啡机'));
   const friday=CORE_QUESTIONS.find(item=>item.id==='friday');
-  assert.ok(friday.scene.includes('发布视频'));
+  assert.ok(friday.scene.includes('八个人'));
   assert.ok(!friday.scene.includes('不够有感觉'));
   const celebration=CORE_QUESTIONS.find(item=>item.id==='celebration');
   assert.ok(celebration.scene.includes('年会抽奖'));
@@ -38,6 +38,7 @@ test('all 16 MBTI results resolve to a unique archetype',()=>{
 test('score reducer is immutable and adaptive questions prioritize closest axes',()=>{
   const base={...EMPTY_SCORES,ei:9,sn:1,tf:-7,jp:2};const next=addScores(base,{sn:-2,jp:1});assert.notEqual(next,base);assert.equal(base.sn,1);assert.equal(next.sn,-1);
   const selected=selectTiebreakers(base);assert.equal(selected.length,4);assert.equal(selected[0].id,'tie-sn-2');assert.equal(new Set(selected.map(item=>item.id)).size,4);
+  assert.equal(Math.abs(getChoiceScore(TIEBREAKERS[0],0).ei),2);
 });
 test('each question is score-centered so its answer set has no built-in letter bias',()=>{
   for(const question of [...CORE_QUESTIONS,...TIEBREAKERS])for(const axis of ['ei','sn','tf','jp']){
@@ -67,7 +68,7 @@ test('calibrated random answer patterns produce a meaningfully differentiated re
   assert.ok(Math.min(...counts.values())/runs>0.025);
 });
 test('saved quiz schema includes persistent achievements and rejects old scoring state',()=>{
-  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,5);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:4}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
+  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,6);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:5}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
 });
 test('achievement catalogue has unique ids and public unlock conditions',()=>{
   assert.equal(ACHIEVEMENTS.length,10);assert.equal(new Set(ACHIEVEMENTS.map(item=>item.id)).size,10);
@@ -75,7 +76,7 @@ test('achievement catalogue has unique ids and public unlock conditions',()=>{
 });
 test('completion, behavior and collection achievements use distinct evidence',()=>{
   assert.ok(evaluateAchievements({answers:[],completed:true,discovered:[]}).includes('living-sample'));
-  const boundary=evaluateAchievements({answers:[{id:'ambition',choice:0},{id:'friday',choice:1}],completed:false,discovered:[]});
+  const boundary=evaluateAchievements({answers:[{id:'ambition',choice:0},{id:'friday',choice:2}],completed:false,discovered:[]});
   assert.ok(boundary.includes('boundary'));
   assert.ok(!evaluateAchievements({answers:[{id:'celebration',choice:0}],completed:true,discovered:[]}).includes('seafood-refund'));
   assert.ok(evaluateAchievements({answers:[{id:'celebration',choice:2}],completed:true,discovered:[]}).includes('seafood-refund'));

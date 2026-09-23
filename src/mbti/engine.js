@@ -16,7 +16,7 @@ export function getChoiceScore(question, choiceIndex) {
   return Object.fromEntries(AXES.map(axis=>{
     if(axis.key!==measuredAxis)return [axis.key,0];
     const average=question.choices.reduce((sum,item)=>sum+(item.score[axis.key]||0),0)/question.choices.length;
-    const weight=reviewAxis===axis.key?1.5:1;
+    const weight=1;
     return [axis.key,((choice.score[axis.key]||0)-average)*weight];
   }));
 }
@@ -56,9 +56,9 @@ export function getResult(scores) {
 }
 
 export function createInitialQuiz(){
-  return {version:5,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null};
+  return {version:6,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null};
 }
 
 export function isValidQuiz(value){
-  return !!value&&value.version===5&&['intro','quiz','result'].includes(value.phase)&&Number.isInteger(value.index)&&value.index>=0&&value.scores&&AXES.every(axis=>Number.isFinite(value.scores[axis.key]))&&Array.isArray(value.answers)&&Array.isArray(value.discovered)&&Array.isArray(value.earned)&&Array.isArray(value.newAwards);
+  return !!value&&value.version===6&&['intro','quiz','result'].includes(value.phase)&&Number.isInteger(value.index)&&value.index>=0&&value.scores&&AXES.every(axis=>Number.isFinite(value.scores[axis.key]))&&Array.isArray(value.answers)&&Array.isArray(value.discovered)&&Array.isArray(value.earned)&&Array.isArray(value.newAwards);
 }
