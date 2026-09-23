@@ -103,6 +103,11 @@ test('English localization covers every question, reaction, archetype and achiev
   }
   for(const item of ARCHETYPES)assert.notEqual(localizeArchetype(item,'en').name,item.name);
   for(const item of ACHIEVEMENTS)assert.notEqual(localizeAchievement(item,'en').name,item.name);
-  assert.equal(getUi('en','introTitle'),'WHAT ARE YOU ACTUALLY LIKE AT WORK?');
+  const chineseEnfp=ARCHETYPES.find(item=>item.type==='ENFP');
+  assert.equal(chineseEnfp.name,'点子气氛发动机');
+  assert.equal(localizeArchetype(chineseEnfp,'en').name,'Idea Starter');
+  assert.ok(!ARCHETYPES.some(item=>item.name.includes('企业微信烟花')));
+  assert.equal(getUi('en','introTitle'),'WHO DO YOU BECOME AT WORK?');
+  assert.equal(getUi('en','analyticsNotice'),undefined);
   assert.doesNotMatch(getUi('en','introBody'),/hands, mouth|professional filter|correct answer/i);
 });

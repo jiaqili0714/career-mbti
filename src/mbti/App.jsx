@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {ACHIEVEMENTS,ACHIEVEMENT_BY_ID,evaluateAchievements} from './achievements.js';
-import {ARCHETYPES,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
+import {ARCHETYPES,ARCHETYPE_BY_TYPE,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
 import {QUIZ_SAVE_KEY,addQuestionScore,createInitialQuiz,getResult,isValidQuiz,selectTiebreakers} from './engine.js';
 import {createResultCard,getShareHtml,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import {LANGUAGE_KEY,detectLanguage,getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
@@ -44,7 +44,8 @@ function App(){
   const tr=(key,zh)=>getUi(language,key)||zh;
   const baseQuestion=quiz.phase==='quiz'?QUESTION_BY_ID.get(quiz.questions[quiz.index]):null;
   const question=baseQuestion?localizeQuestion(baseQuestion,language):null;
-  const result=localizeArchetype(quiz.result||null,language);
+  const currentResult=quiz.result?{...ARCHETYPE_BY_TYPE.get(quiz.result.type),axes:quiz.result.axes}:null;
+  const result=localizeArchetype(currentResult,language);
 
   function start(){
     setPanel(null);setSelected(null);setReaction(null);
@@ -114,7 +115,7 @@ function Intro({language,onStart,hasProgress,onResume}){
   const tr=(key,zh)=>getUi(language,key)||zh;
   return <section className="intro-screen">
     <div className="office-visual"><img src="/assets/mbti-office.webp" alt={tr('introAlt','办公室里，两位同事在复印机旁低声交谈，一位新人独自坐在工位上。')}/><div className="system-caption">{tr('systemScanning','人力系统正在识别可替换部件……')}</div></div>
-    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 16 道情境')}</span><h1><CopyLines text={tr('introTitle','欢迎入职。\n请暴露你的第一反应。')}/></h1><p>{tr('introBody','不用选成熟答案。选那个你还没来得及装职业、就已经想点下去的选项。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 3–4 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small><small>{tr('analyticsNotice','匿名统计地区、来源和答题进度；不保存姓名、完整 IP 或每题选项。')}</small></div>
+    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 16 道情境')}</span><h1><CopyLines text={tr('introTitle','欢迎入职。\n请暴露你的第一反应。')}/></h1><p>{tr('introBody','不用选成熟答案。选那个你还没来得及装职业、就已经想点下去的选项。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 3–4 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small></div>
   </section>
 }
 
