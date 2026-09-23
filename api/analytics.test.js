@@ -74,13 +74,14 @@ test('experiment endpoint accepts only the anonymous survey schema',async()=>{
     const res=response();
     await handler({
       method:'POST',headers:{host:'career-mbti-beta.vercel.app',origin:'https://career-mbti.ggboy-313.chatgpt.site'},
-      body:{event:'experiment_response',responseId:'7f972a0a-98ee-4f2d-a2d7-0249a89c161f',sessionId:'d9428888-122b-4c59-9c30-8f3a64c8475e',attemptId:'6ba7b810-9dad-41d1-80b4-00c04f1e9cb7',resultType:'isfj',actualMbti:'enfp',mbtiConfidence:'likely',ageRange:'25_34',gender:'prefer_not',industry:'technology',careerStage:'3_5',workMode:'hybrid',roleLevel:'individual',language:'zh-CN'},
+      body:{event:'experiment_response',responseId:'7f972a0a-98ee-4f2d-a2d7-0249a89c161f',sessionId:'d9428888-122b-4c59-9c30-8f3a64c8475e',attemptId:'6ba7b810-9dad-41d1-80b4-00c04f1e9cb7',resultType:'isfj',actualMbti:'unknown',mbtiConfidence:'fit_very',ageRange:'25_34',gender:'prefer_not',industry:'technology',careerStage:'3_5',workMode:'hybrid',roleLevel:'individual',language:'zh-CN'},
     },res);
     assert.equal(res.statusCode,204);
     assert.equal(res.headers['access-control-allow-origin'],'https://career-mbti.ggboy-313.chatgpt.site');
     assert.equal(forwarded.url,'https://warehouse.example/rest/v1/rpc/record_experiment_response');
-    assert.equal(forwarded.payload.p_actual_mbti,'ENFP');
+    assert.equal(forwarded.payload.p_actual_mbti,'UNKNOWN');
     assert.equal(forwarded.payload.p_result_type,'ISFJ');
+    assert.equal(forwarded.payload.p_mbti_confidence,'fit_very');
     assert.equal(forwarded.payload.p_industry,'technology');
 
     const invalid=response();

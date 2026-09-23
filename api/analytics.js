@@ -3,7 +3,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const MBTI=/^[EI][SN][TF][JP]$/;
 const TRUSTED_SITE_ORIGINS=new Set(['https://career-mbti.ggboy-313.chatgpt.site']);
 const EXPERIMENT_VALUES={
-  mbtiConfidence:new Set(['sure','likely','old_result','unsure']),
+  mbtiConfidence:new Set(['sure','likely','old_result','unsure','fit_very','fit_somewhat','fit_not_really']),
   ageRange:new Set(['under_18','18_24','25_34','35_44','45_54','55_plus','prefer_not']),
   gender:new Set(['woman','man','nonbinary','prefer_not']),
   industry:new Set(['technology','finance','education','healthcare','creative_media','professional_services','retail_hospitality','manufacturing_logistics','government_nonprofit','student','other','prefer_not']),

@@ -110,4 +110,10 @@ test('English localization covers every question, reaction, archetype and achiev
   assert.equal(getUi('en','introTitle'),'WHO DO YOU BECOME AT WORK?');
   assert.equal(getUi('en','analyticsNotice'),undefined);
   assert.doesNotMatch(getUi('en','introBody'),/hands, mouth|professional filter|correct answer/i);
+  const lunch=localizeQuestion(CORE_QUESTIONS.find(item=>item.id==='equal-pay'),'en');
+  assert.match(lunch.scene,/cart is \$6 below the delivery minimum/);
+  assert.doesNotMatch(lunch.scene,/you are six dollars short/i);
+  const coffee=localizeQuestion(CORE_QUESTIONS.find(item=>item.id==='competitor'),'en');
+  assert.match(coffee.scene,/office coffee machine/);
+  assert.equal(coffee.prompt,'Where does your mind go first?');
 });
