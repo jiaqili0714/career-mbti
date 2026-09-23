@@ -25,7 +25,7 @@ export function addQuestionScore(scores, question, choiceIndex) {
   return addScores(scores,getChoiceScore(question,choiceIndex));
 }
 
-export function selectTiebreakers(scores, count=8) {
+export function selectTiebreakers(scores, count=4) {
   const ranked=AXES.toSorted((a,b)=>Math.abs(scores[a.key])-Math.abs(scores[b.key]));
   const selected=[];
   for(let i=0;i<count;i++){
@@ -56,9 +56,9 @@ export function getResult(scores) {
 }
 
 export function createInitialQuiz(){
-  return {version:4,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null};
+  return {version:5,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null};
 }
 
 export function isValidQuiz(value){
-  return !!value&&value.version===4&&['intro','quiz','result'].includes(value.phase)&&Number.isInteger(value.index)&&value.index>=0&&value.scores&&AXES.every(axis=>Number.isFinite(value.scores[axis.key]))&&Array.isArray(value.answers)&&Array.isArray(value.discovered)&&Array.isArray(value.earned)&&Array.isArray(value.newAwards);
+  return !!value&&value.version===5&&['intro','quiz','result'].includes(value.phase)&&Number.isInteger(value.index)&&value.index>=0&&value.scores&&AXES.every(axis=>Number.isFinite(value.scores[axis.key]))&&Array.isArray(value.answers)&&Array.isArray(value.discovered)&&Array.isArray(value.earned)&&Array.isArray(value.newAwards);
 }

@@ -42,7 +42,7 @@ test('analytics endpoint validates and forwards only coarse server-side geograph
     assert.equal(forwarded.payload.p_country_code,'US');
     assert.equal(forwarded.payload.p_region_code,'NY');
     assert.equal(forwarded.payload.p_attempt_id,'6ba7b810-9dad-41d1-80b4-00c04f1e9cb7');
-    assert.equal(forwarded.payload.p_questions_answered,28);
+    assert.equal(forwarded.payload.p_questions_answered,16);
     assert.equal(forwarded.payload.p_result_type,'INFJ');
     assert.equal(forwarded.options.headers.apikey,'server-secret');
   }finally{

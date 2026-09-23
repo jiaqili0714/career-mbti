@@ -1,6 +1,6 @@
 export function getShareText(result,language='zh'){
   if(language==='en')return `My workplace personality is ${result.name} (${result.type}).\n${result.verdict}\nTake the test and find out what you are like at work.\n`;
-  return `我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n28 道职场情境，看看公司到底把你养成了什么东西。\n`;
+  return `我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n16 道离谱但眼熟的情境，看看公司到底把你养成了什么东西。\n`;
 }
 
 export function getShareUrl(url=window.location.href){
@@ -20,7 +20,7 @@ export function getShareHtml(result,language='zh',shareUrl,imageDataUrl=''){
 }
 
 export function getXShareUrl(result,url,language='zh'){
-  const text=language==='en'?`My workplace personality is ${result.name} (${result.type}).\n${result.verdict}\nWhat are you actually like at work? #OfficeSurvivalTest`:`我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n28 道题，看看公司把你养成了什么东西。 #职场异变图鉴`;
+  const text=language==='en'?`My workplace personality is ${result.name} (${result.type}).\n${result.verdict}\nWhat are you actually like at work? #OfficeSurvivalTest`:`我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n16 道题，看看公司把你养成了什么东西。 #职场异变图鉴`;
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 }
 
@@ -73,6 +73,7 @@ export async function createResultCard(result,language='zh'){
     context.fillStyle='#648098';context.font='600 22px sans-serif';context.fillText(label,145,y+36);
     context.fillStyle='#0d355d';context.font='600 27px sans-serif';wrapText(context,value,145,y+78,780,38,2);
   });
-  context.fillStyle='#0d355d';context.font='700 23px sans-serif';context.fillText(language==='en'?'Take the test. Then send it to the coworker who knows you best.':'扫码这一步已被流程优化：直接打开链接测试。',115,1238);
+  context.fillStyle='#0d355d';context.font='700 23px sans-serif';context.fillText(language==='en'?'Take the test: career-mbti-beta.vercel.app':'来测测公司把你养成了什么东西',115,1228);
+  context.fillStyle='#648098';context.font='600 20px sans-serif';context.fillText('career-mbti-beta.vercel.app',115,1265);
   return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('无法生成分享海报')),'image/png'));
 }

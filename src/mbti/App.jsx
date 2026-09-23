@@ -13,14 +13,13 @@ const QUESTION_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map(item=>[item.
 const QUESTION_ORDER_BY_ID=new Map([...CORE_QUESTIONS,...TIEBREAKERS].map((item,index)=>[item.id,index%4]));
 const NAV=[['start','开始测试','TAKE THE TEST',0,0],['profile','我的档案','MY FILE',1,0],['atlas','人格图鉴','TYPE INDEX',2,0],['medals','工伤勋章','WORKPLACE SCARS',3,0],['exit','离职遗言','EXIT INTERVIEW',0,1]];
 const GITHUB_PROJECT_URL='https://github.com/jiaqili0714/career-mbti';
-const TOTAL_QUESTIONS=28;
+const TOTAL_QUESTIONS=16;
 
 function loadQuiz(){
   try{
     const saved=JSON.parse(localStorage.getItem(QUIZ_SAVE_KEY));
-    if([2,3].includes(saved?.version))return {...createInitialQuiz(),discovered:Array.isArray(saved.discovered)?saved.discovered:[],earned:Array.isArray(saved.earned)?saved.earned:[]};
-    const migrated=saved?{...saved,earned:Array.isArray(saved.earned)?saved.earned:[],newAwards:Array.isArray(saved.newAwards)?saved.newAwards:[]}:saved;
-    return isValidQuiz(migrated)?migrated:createInitialQuiz();
+    if(saved&&!isValidQuiz(saved))return {...createInitialQuiz(),discovered:Array.isArray(saved.discovered)?saved.discovered:[],earned:Array.isArray(saved.earned)?saved.earned:[]};
+    return saved||createInitialQuiz();
   }
   catch{return createInitialQuiz();}
 }
@@ -115,7 +114,7 @@ function Intro({language,onStart,hasProgress,onResume}){
   const tr=(key,zh)=>getUi(language,key)||zh;
   return <section className="intro-screen">
     <div className="office-visual"><img src="/assets/mbti-office.webp" alt={tr('introAlt','办公室里，两位同事在复印机旁低声交谈，一位新人独自坐在工位上。')}/><div className="system-caption">{tr('systemScanning','人力系统正在识别可替换部件……')}</div></div>
-    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 28 道情境')}</span><h1><CopyLines text={tr('introTitle','欢迎入职。\n请暴露你的第一反应。')}/></h1><p>{tr('introBody','别选“正确答案”。选老板突然点你名时，你的手、嘴和脑子最先干的那件事。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 5–7 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small><small>{tr('analyticsNotice','匿名统计地区、来源和答题进度；不保存姓名、完整 IP 或每题选项。')}</small></div>
+    <div className="intro-copy"><span className="eyebrow">{tr('introEyebrow','公司物种鉴定 · 16 道情境')}</span><h1><CopyLines text={tr('introTitle','欢迎入职。\n请暴露你的第一反应。')}/></h1><p>{tr('introBody','不用选成熟答案。选那个你还没来得及装职业、就已经想点下去的选项。每完成一次测试，只解锁本次鉴定出的公司物种。')}</p><div className="intro-actions"><button className="primary-action" onClick={onStart}>{tr('begin','开始接受鉴定 →')}</button>{hasProgress?<button className="text-action" onClick={onResume}>{tr('resume','继续上次工伤')}</button>:null}</div><small>{tr('introMeta','预计 3–4 分钟 · 一次解锁一种 · 图鉴永久保存在本机')}</small><small>{tr('analyticsNotice','匿名统计地区、来源和答题进度；不保存姓名、完整 IP 或每题选项。')}</small></div>
   </section>
 }
 
@@ -177,8 +176,7 @@ function ShareSheet({language,result,onClose}){
       const html=getShareHtml(result,language,shareUrl,imageDataUrl);
       const plain=new Blob([value],{type:'text/plain'});
       const rich=new Blob([html],{type:'text/html'});
-      try{await navigator.clipboard.write([new ClipboardItem({'text/plain':plain,'text/html':rich,'image/png':cardFile})]);}
-      catch{await navigator.clipboard.write([new ClipboardItem({'text/plain':plain,'text/html':rich})]);}
+      await navigator.clipboard.write([new ClipboardItem({'text/html':rich,'text/plain':plain})]);
       setStatus(tr('copyRichDone','结果卡、文案和链接已一起复制。直接去对话框里粘贴。'));
     }catch{
       try{await navigator.clipboard.writeText(value);}catch{copyFallback(value);}

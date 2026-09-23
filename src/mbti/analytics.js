@@ -70,7 +70,7 @@ function send(event,{questionsAnswered=0,resultType='',final=false}={}){
     event,
     sessionId,
     attemptId,
-    questionsAnswered:Math.max(0,Math.min(28,Number(questionsAnswered)||0)),
+    questionsAnswered:Math.max(0,Math.min(16,Number(questionsAnswered)||0)),
     resultType:clean(resultType,4).toUpperCase(),
     activeSeconds:currentActiveSeconds(),
     ...entryContext(),

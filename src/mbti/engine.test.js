@@ -6,10 +6,10 @@ import {EMPTY_SCORES,addQuestionScore,addScores,getChoiceScore,getResult,getType
 import {getShareHtml,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import {getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
 
-test('question bank has 20 core questions and an adaptive pool for every axis',()=>{
-  assert.equal(CORE_QUESTIONS.length,20);
+test('question bank has 12 core questions and a four-question adaptive finish',()=>{
+  assert.equal(CORE_QUESTIONS.length,12);
   assert.equal(TIEBREAKERS.length,8);
-  assert.equal(CORE_QUESTIONS.length+TIEBREAKERS.length,28);
+  assert.equal(CORE_QUESTIONS.length+4,16);
   for(const axis of ['ei','sn','tf','jp'])assert.equal(TIEBREAKERS.filter(item=>item.id.startsWith(`tie-${axis}`)).length,2);
   for(const item of [...CORE_QUESTIONS,...TIEBREAKERS]){assert.equal(item.choices.length,4);assert.ok(item.reaction.length>12);}
 });
@@ -18,13 +18,15 @@ test('every playable choice has a distinct scene reaction and revised prompts st
     assert.equal(CHOICE_REACTIONS[item.id]?.length,4,`${item.id} needs four reactions`);
     assert.equal(new Set(CHOICE_REACTIONS[item.id]).size,4,`${item.id} reactions should be unique`);
   }
-  const success=CORE_QUESTIONS.find(item=>item.id==='success');
-  assert.ok(success.choices[2].text.includes('还愿意和彼此说人话'));
+  const firstDay=CORE_QUESTIONS.find(item=>item.id==='first-day');
+  assert.ok(firstDay.scene.includes('表情包'));
+  const coffee=CORE_QUESTIONS.find(item=>item.id==='competitor');
+  assert.ok(coffee.scene.includes('咖啡机'));
   const friday=CORE_QUESTIONS.find(item=>item.id==='friday');
   assert.ok(friday.scene.includes('发布视频'));
   assert.ok(!friday.scene.includes('不够有感觉'));
   const celebration=CORE_QUESTIONS.find(item=>item.id==='celebration');
-  assert.ok(celebration.scene.startsWith('庆功宴上'));
+  assert.ok(celebration.scene.includes('年会抽奖'));
 });
 test('all 16 MBTI results resolve to a unique archetype',()=>{
   assert.equal(ARCHETYPES.length,16);assert.equal(new Set(ARCHETYPES.map(item=>item.type)).size,16);
@@ -35,7 +37,7 @@ test('all 16 MBTI results resolve to a unique archetype',()=>{
 });
 test('score reducer is immutable and adaptive questions prioritize closest axes',()=>{
   const base={...EMPTY_SCORES,ei:9,sn:1,tf:-7,jp:2};const next=addScores(base,{sn:-2,jp:1});assert.notEqual(next,base);assert.equal(base.sn,1);assert.equal(next.sn,-1);
-  const selected=selectTiebreakers(base);assert.equal(selected.length,8);assert.equal(selected[0].id,'tie-sn-2');assert.equal(selected[4].id,'tie-sn-1');assert.equal(new Set(selected.map(item=>item.id)).size,8);
+  const selected=selectTiebreakers(base);assert.equal(selected.length,4);assert.equal(selected[0].id,'tie-sn-2');assert.equal(new Set(selected.map(item=>item.id)).size,4);
 });
 test('each question is score-centered so its answer set has no built-in letter bias',()=>{
   for(const question of [...CORE_QUESTIONS,...TIEBREAKERS])for(const axis of ['ei','sn','tf','jp']){
@@ -57,7 +59,7 @@ test('calibrated random answer patterns produce a meaningfully differentiated re
   for(let run=0;run<runs;run++){
     let scores={...EMPTY_SCORES};
     for(const question of CORE_QUESTIONS)scores=addQuestionScore(scores,question,Math.floor(random()*4));
-    for(const question of selectTiebreakers(scores))scores=addQuestionScore(scores,question,Math.floor(random()*4));
+    for(const question of selectTiebreakers(scores,4))scores=addQuestionScore(scores,question,Math.floor(random()*4));
     const type=getType(scores);counts.set(type,(counts.get(type)||0)+1);
   }
   assert.equal(counts.size,16);
@@ -65,7 +67,7 @@ test('calibrated random answer patterns produce a meaningfully differentiated re
   assert.ok(Math.min(...counts.values())/runs>0.025);
 });
 test('saved quiz schema includes persistent achievements and rejects old scoring state',()=>{
-  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,4);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:3}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
+  const state=createInitialQuiz();assert.ok(isValidQuiz(state));assert.equal(state.version,5);assert.deepEqual(state.earned,[]);assert.deepEqual(state.newAwards,[]);assert.ok(!isValidQuiz({...state,version:4}));assert.ok(!isValidQuiz({...state,index:-1}));assert.ok(!isValidQuiz({...state,scores:{}}));assert.ok(!isValidQuiz({...state,discovered:null}));assert.ok(!isValidQuiz({...state,earned:null}));
 });
 test('achievement catalogue has unique ids and public unlock conditions',()=>{
   assert.equal(ACHIEVEMENTS.length,10);assert.equal(new Set(ACHIEVEMENTS.map(item=>item.id)).size,10);
@@ -73,17 +75,17 @@ test('achievement catalogue has unique ids and public unlock conditions',()=>{
 });
 test('completion, behavior and collection achievements use distinct evidence',()=>{
   assert.ok(evaluateAchievements({answers:[],completed:true,discovered:[]}).includes('living-sample'));
-  const boundary=evaluateAchievements({answers:[{id:'credit',choice:0},{id:'parallel',choice:1}],completed:false,discovered:[]});
+  const boundary=evaluateAchievements({answers:[{id:'ambition',choice:0},{id:'friday',choice:1}],completed:false,discovered:[]});
   assert.ok(boundary.includes('boundary'));
   assert.ok(!evaluateAchievements({answers:[{id:'celebration',choice:0}],completed:true,discovered:[]}).includes('seafood-refund'));
-  assert.ok(evaluateAchievements({answers:[{id:'celebration',choice:3}],completed:true,discovered:[]}).includes('seafood-refund'));
+  assert.ok(evaluateAchievements({answers:[{id:'celebration',choice:2}],completed:true,discovered:[]}).includes('seafood-refund'));
   assert.ok(evaluateAchievements({answers:[],completed:false,discovered:[0,1,2,3]}).includes('field-researcher'));
 });
 test('share helpers create platform-safe result copy and clean URLs',()=>{
   const result={name:'Excel 监工',type:'ESTJ',verdict:'你不是没有感情，感情只是尚未录入必填字段。'};
   assert.match(getShareText(result),/Excel 监工（ESTJ）/);
   assert.match(getShareText(result),/看看公司到底把你养成了什么东西/);
-  assert.match(getShareText(result),/28 道职场情境/);
+  assert.match(getShareText(result),/16 道离谱但眼熟的情境/);
   assert.match(getShareText(localizeArchetype({...result,index:10},'en'),'en'),/My workplace personality is/);
   assert.ok(!getShareText(result).includes('你也来接受公司物种鉴定'));
   assert.equal(getShareUrl('https://example.com/mbti.html#result'),'https://example.com/mbti.html');

@@ -40,7 +40,7 @@ export default async function handler(req,res){
     p_campaign:text(body.campaign,120),
     p_language:text(body.language,16),
     p_device_type:['mobile','desktop'].includes(body.deviceType)?body.deviceType:'unknown',
-    p_questions_answered:Math.max(0,Math.min(28,Number(body.questionsAnswered)||0)),
+    p_questions_answered:Math.max(0,Math.min(16,Number(body.questionsAnswered)||0)),
     p_active_seconds:Math.max(0,Math.min(86400,Number(body.activeSeconds)||0)),
     p_result_type:MBTI.test(resultType)?resultType:'',
   };

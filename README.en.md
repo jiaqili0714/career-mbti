@@ -1,6 +1,6 @@
 # Office Survival Test
 
-A bilingual workplace MBTI quiz wrapped in a 1990s-inspired pixel-art office. Across 28 scenarios about ambition, office politics, vague briefs, competing priorities, and Friday-afternoon emergencies, the test identifies which of 16 workplace archetypes best matches how you operate at work.
+A bilingual workplace MBTI quiz wrapped in a 1990s-inspired pixel-art office. Across 16 quick, familiar, slightly absurd scenarios, the test identifies which of 16 workplace archetypes best matches how you show up at work.
 
 The site supports English and Simplified Chinese. It detects the browser language on the first visit, and visitors can switch languages at any time.
 
