@@ -51,3 +51,33 @@ test('analytics endpoint validates and forwards only coarse server-side geograph
     if(previousKey===undefined)delete process.env.SUPABASE_SECRET_KEY;else process.env.SUPABASE_SECRET_KEY=previousKey;
   }
 });
+
+test('experiment endpoint accepts only the anonymous survey schema',async()=>{
+  const previousUrl=process.env.SUPABASE_URL;
+  const previousKey=process.env.SUPABASE_SECRET_KEY;
+  const previousFetch=global.fetch;
+  process.env.SUPABASE_URL='https://warehouse.example';
+  process.env.SUPABASE_SECRET_KEY='server-secret';
+  let forwarded;
+  global.fetch=async(url,options)=>{forwarded={url,payload:JSON.parse(options.body)};return new Response(null,{status:204});};
+  try{
+    const res=response();
+    await handler({
+      method:'POST',headers:{host:'career.example',origin:'https://career.example'},
+      body:{event:'experiment_response',responseId:'7f972a0a-98ee-4f2d-a2d7-0249a89c161f',sessionId:'d9428888-122b-4c59-9c30-8f3a64c8475e',attemptId:'6ba7b810-9dad-41d1-80b4-00c04f1e9cb7',resultType:'isfj',actualMbti:'enfp',mbtiConfidence:'likely',ageRange:'25_34',gender:'prefer_not',industry:'technology',careerStage:'3_5',workMode:'hybrid',roleLevel:'individual',language:'zh-CN'},
+    },res);
+    assert.equal(res.statusCode,204);
+    assert.equal(forwarded.url,'https://warehouse.example/rest/v1/rpc/record_experiment_response');
+    assert.equal(forwarded.payload.p_actual_mbti,'ENFP');
+    assert.equal(forwarded.payload.p_result_type,'ISFJ');
+    assert.equal(forwarded.payload.p_industry,'technology');
+
+    const invalid=response();
+    await handler({method:'POST',headers:{host:'career.example',origin:'https://career.example'},body:{event:'experiment_response',responseId:'7f972a0a-98ee-4f2d-a2d7-0249a89c161f',sessionId:'d9428888-122b-4c59-9c30-8f3a64c8475e',resultType:'ISFJ',actualMbti:'ENFP',industry:'very specific employer'}},invalid);
+    assert.equal(invalid.statusCode,400);
+  }finally{
+    global.fetch=previousFetch;
+    if(previousUrl===undefined)delete process.env.SUPABASE_URL;else process.env.SUPABASE_URL=previousUrl;
+    if(previousKey===undefined)delete process.env.SUPABASE_SECRET_KEY;else process.env.SUPABASE_SECRET_KEY=previousKey;
+  }
+});

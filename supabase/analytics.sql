@@ -37,6 +37,72 @@ create index if not exists analytics_attempts_session_idx on public.analytics_at
 create index if not exists analytics_attempts_started_idx on public.analytics_attempts (started_at desc);
 create index if not exists analytics_attempts_result_idx on public.analytics_attempts (result_type) where result_type is not null;
 
+create table if not exists public.experiment_responses (
+  response_id uuid primary key,
+  session_id uuid not null,
+  attempt_id uuid,
+  submitted_at timestamptz not null default now(),
+  result_type varchar(4) not null check (result_type ~ '^[EI][SN][TF][JP]$'),
+  actual_mbti varchar(8) not null check (actual_mbti = 'UNKNOWN' or actual_mbti ~ '^[EI][SN][TF][JP]$'),
+  mbti_confidence varchar(24),
+  age_range varchar(24),
+  gender varchar(24),
+  industry varchar(40),
+  career_stage varchar(24),
+  work_mode varchar(24),
+  role_level varchar(24),
+  language varchar(16)
+);
+
+alter table public.experiment_responses enable row level security;
+revoke all on public.experiment_responses from public, anon, authenticated;
+create index if not exists experiment_responses_submitted_idx on public.experiment_responses (submitted_at desc);
+create index if not exists experiment_responses_transition_idx on public.experiment_responses (actual_mbti, result_type) where actual_mbti <> 'UNKNOWN';
+
+create or replace function public.record_experiment_response(
+  p_response_id uuid,
+  p_session_id uuid,
+  p_attempt_id uuid,
+  p_result_type text,
+  p_actual_mbti text,
+  p_mbti_confidence text,
+  p_age_range text,
+  p_gender text,
+  p_industry text,
+  p_career_stage text,
+  p_work_mode text,
+  p_role_level text,
+  p_language text
+) returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.experiment_responses (
+    response_id, session_id, attempt_id, result_type, actual_mbti, mbti_confidence,
+    age_range, gender, industry, career_stage, work_mode, role_level, language
+  ) values (
+    p_response_id,
+    p_session_id,
+    p_attempt_id,
+    p_result_type,
+    p_actual_mbti,
+    nullif(left(p_mbti_confidence,24),''),
+    nullif(left(p_age_range,24),''),
+    nullif(left(p_gender,24),''),
+    nullif(left(p_industry,40),''),
+    nullif(left(p_career_stage,24),''),
+    nullif(left(p_work_mode,24),''),
+    nullif(left(p_role_level,24),''),
+    nullif(left(p_language,16),'')
+  ) on conflict (response_id) do nothing;
+end;
+$$;
+
+revoke execute on function public.record_experiment_response(uuid,uuid,uuid,text,text,text,text,text,text,text,text,text,text) from public, anon, authenticated;
+grant execute on function public.record_experiment_response(uuid,uuid,uuid,text,text,text,text,text,text,text,text,text,text) to service_role;
+
 create or replace function public.record_analytics_event(
   p_event text,
   p_session_id uuid,
@@ -166,4 +232,25 @@ where result_type is not null
 group by 1
 order by results desc;
 
-revoke all on public.analytics_daily, public.analytics_by_region, public.analytics_by_source, public.analytics_results from public, anon, authenticated;
+create or replace view public.experiment_transitions as
+select actual_mbti, result_type as workplace_mbti, count(*) as responses,
+  round(100.0 * count(*) / sum(count(*)) over (partition by actual_mbti),1) as share_within_actual_pct
+from public.experiment_responses
+where actual_mbti <> 'UNKNOWN'
+group by 1,2
+order by responses desc;
+
+create or replace view public.experiment_overview as
+select
+  count(*) as responses,
+  count(*) filter (where actual_mbti <> 'UNKNOWN') as typed_responses,
+  round(100.0 * count(*) filter (where actual_mbti = result_type) / nullif(count(*) filter (where actual_mbti <> 'UNKNOWN'),0),1) as exact_match_pct,
+  round(avg(
+    (substr(actual_mbti,1,1)=substr(result_type,1,1))::integer +
+    (substr(actual_mbti,2,1)=substr(result_type,2,1))::integer +
+    (substr(actual_mbti,3,1)=substr(result_type,3,1))::integer +
+    (substr(actual_mbti,4,1)=substr(result_type,4,1))::integer
+  ) filter (where actual_mbti <> 'UNKNOWN'),2) as avg_matching_dimensions
+from public.experiment_responses;
+
+revoke all on public.analytics_daily, public.analytics_by_region, public.analytics_by_source, public.analytics_results, public.experiment_transitions, public.experiment_overview from public, anon, authenticated;

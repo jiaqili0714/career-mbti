@@ -121,6 +121,26 @@ export function trackQuizStart(questionsAnswered=0){
 export function trackQuestionAnswered(questionsAnswered){send('progress',{questionsAnswered});}
 export function trackQuizComplete(questionsAnswered,resultType){
   send('complete',{questionsAnswered,resultType});
-  try{sessionStorage.removeItem(ATTEMPT_KEY);}catch{}
-  attemptId=null;
+}
+
+export async function submitExperimentResponse(response){
+  const responseId=crypto.randomUUID();
+  const payload={
+    event:'experiment_response',
+    responseId,
+    sessionId:sessionId||getSessionId(),
+    attemptId,
+    resultType:clean(response.resultType,4).toUpperCase(),
+    actualMbti:clean(response.actualMbti,8).toUpperCase(),
+    mbtiConfidence:clean(response.mbtiConfidence,24),
+    ageRange:clean(response.ageRange,24),
+    gender:clean(response.gender,24),
+    industry:clean(response.industry,40),
+    careerStage:clean(response.careerStage,24),
+    workMode:clean(response.workMode,24),
+    roleLevel:clean(response.roleLevel,24),
+    language:clean(document.documentElement.lang||navigator.language,16),
+  };
+  const result=await fetch(API_PATH,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  return result.ok?{responseId}:null;
 }

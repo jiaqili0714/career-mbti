@@ -1,6 +1,6 @@
 # Anonymous analytics warehouse
 
-The site records one aggregate row per browser-tab session and one row per quiz attempt. It tracks coarse country/region, referral source and UTM tags, active foreground time, question progress, language/device class, and the final MBTI type. It does **not** store names, email addresses, exact coordinates, full IP addresses, or individual answers. Global Privacy Control and Do Not Track are respected.
+The site records one aggregate row per browser-tab session and one row per quiz attempt. It tracks coarse country/region, referral source and UTM tags, active foreground time, question progress, language/device class, and the final MBTI type. After seeing a result, visitors can separately opt into the social experiment by submitting their usual MBTI and broad demographic/work categories. It does **not** store names, employers, email addresses, exact coordinates, full IP addresses, or individual quiz answers. Global Privacy Control and Do Not Track are respected for passive analytics; the experiment form is submitted only after an explicit user action.
 
 ## One-time setup
 
@@ -21,6 +21,8 @@ Open **Supabase → Table Editor → Views**:
 - `analytics_by_region`: country/region traffic and engagement
 - `analytics_by_source`: direct, referring domain, or UTM campaign traffic
 - `analytics_results`: distribution of the 16 outcomes
+- `experiment_overview`: response count, exact-match rate, and average matching dimensions
+- `experiment_transitions`: usual MBTI → workplace MBTI pathways
 
 For campaign links, use standard tags such as:
 

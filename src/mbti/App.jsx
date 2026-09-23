@@ -6,6 +6,7 @@ import {QUIZ_SAVE_KEY,addQuestionScore,createInitialQuiz,getResult,isValidQuiz,s
 import {createResultCard,getShareHtml,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import {LANGUAGE_KEY,detectLanguage,getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
 import {initAnalytics,trackQuestionAnswered,trackQuizComplete,trackQuizStart} from './analytics.js';
+import ExperimentSurvey from './ExperimentSurvey.jsx';
 import './mbti.css';
 import './share.css';
 
@@ -83,6 +84,7 @@ function App(){
   }
   function reset(){setQuiz({...createInitialQuiz(),discovered:quiz.discovered,earned:quiz.earned});setPanel(null);}
   function clearAll(){localStorage.removeItem(QUIZ_SAVE_KEY);setQuiz(createInitialQuiz());setPanel(null);}
+  function saveExperiment(experiment){setQuiz(current=>({...current,experiment}));}
   function nav(id){if(id==='start'){quiz.phase==='intro'?start():setPanel(null);return;}setPanel(id);}
 
   return <div className="mbti-app">
@@ -101,7 +103,7 @@ function App(){
 
       <main className="workstation">
         <div className="window-bar"><span>{tr('questionWindow','// QUESTION.EXE')}</span><i>{tr('monitor','绩效监控运行中')}</i></div>
-        {quiz.phase==='intro'?<Intro language={language} onStart={start} hasProgress={quiz.answers.length>0} onResume={resume}/>:quiz.phase==='result'?<Result language={language} result={result?{...result,newAwards:quiz.newAwards}:null} onReset={reset}/>:<Question language={language} question={question} quiz={quiz} selected={selected} reaction={reaction} onChoose={choose}/>}
+        {quiz.phase==='intro'?<Intro language={language} onStart={start} hasProgress={quiz.answers.length>0} onResume={resume}/>:quiz.phase==='result'?<Result language={language} result={result?{...result,newAwards:quiz.newAwards}:null} experiment={quiz.experiment||null} onExperimentSaved={saveExperiment} onReset={reset}/>:<Question language={language} question={question} quiz={quiz} selected={selected} reaction={reaction} onChoose={choose}/>}
       </main>
 
       <Atlas language={language} quiz={quiz}/>
@@ -138,7 +140,7 @@ function Question({language,question,quiz,selected,reaction,onChoose}){
   </section>
 }
 
-function Result({language,result,onReset}){
+function Result({language,result,experiment,onExperimentSaved,onReset}){
   const [sharing,setSharing]=useState(false);
   const tr=(key,zh)=>getUi(language,key)||zh;
   if(!result)return null;
@@ -146,6 +148,7 @@ function Result({language,result,onReset}){
     <div className="result-hero"><Portrait index={result.index}/><div><span className="eyebrow">{tr('resultEyebrow','异常员工档案 · 鉴定完成')}</span><h1>{result.name}<small>{result.type}</small></h1><p>{result.verdict}</p></div></div>
     <div className="result-grid"><article><span>{tr('survive','你靠什么活下来')}</span><p>{result.survival}</p></article><article><span>{tr('used','公司如何使用你')}</span><p>{result.usedBy}</p></article><article><span>{tr('drain','最容易在哪里耗尽')}</span><p>{result.drain}</p></article></div>
     <div className="axis-list">{result.axes.map(axis=><div key={axis.key}><header><b>{axis.letter}</b><span>{axis.letter===axis.left?axis.leftLabel:axis.rightLabel}</span><small>{axis.label}</small></header><div><i style={{width:`${Math.max(12,axis.strength*100)}%`}}/></div></div>)}</div>
+    <ExperimentSurvey language={language} result={result} saved={experiment} onSaved={onExperimentSaved}/>
     {result.newAwards.length?<div className="result-awards"><span>{tr('roundAwards','本轮工伤认定')}</span><div>{result.newAwards.map(id=><b key={id}>{localizeAchievement(ACHIEVEMENT_BY_ID.get(id),language).name}</b>)}</div></div>:null}
     <footer className="result-footer"><p>{tr('disclaimer','本档案不能用于招聘、晋升或证明你比同事更懂自己。')}</p><div><button className="share-action" onClick={()=>setSharing(true)}>{tr('share','分享工伤鉴定')}</button><button className="primary-action" onClick={onReset}>{tr('restart','重新接受异变')}</button></div></footer>
     {sharing?<ShareSheet language={language} result={result} onClose={()=>setSharing(false)}/>:null}

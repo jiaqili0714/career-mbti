@@ -56,7 +56,7 @@ export function getResult(scores) {
 }
 
 export function createInitialQuiz(){
-  return {version:6,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null};
+  return {version:6,phase:'intro',index:0,questions:[],scores:{...EMPTY_SCORES},answers:[],discovered:[],earned:[],newAwards:[],reaction:null,result:null,experiment:null};
 }
 
 export function isValidQuiz(value){
