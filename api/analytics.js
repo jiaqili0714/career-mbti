@@ -1,6 +1,7 @@
 const EVENTS=new Set(['session_start','quiz_start','progress','complete','heartbeat','session_end','experiment_response']);
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MBTI=/^[EI][SN][TF][JP]$/;
+const TRUSTED_SITE_ORIGINS=new Set(['https://career-mbti.ggboy-313.chatgpt.site']);
 const EXPERIMENT_VALUES={
   mbtiConfidence:new Set(['sure','likely','old_result','unsure']),
   ageRange:new Set(['under_18','18_24','25_34','35_44','45_54','55_plus','prefer_not']),
@@ -19,9 +20,24 @@ function sameOrigin(req){
   try{return new URL(origin).host===req.headers.host;}catch{return false;}
 }
 
+function trustedOrigin(req){
+  const origin=req.headers.origin;
+  return typeof origin==='string'&&TRUSTED_SITE_ORIGINS.has(origin);
+}
+
+function applyCors(req,res){
+  if(!trustedOrigin(req))return;
+  res.setHeader('access-control-allow-origin',req.headers.origin);
+  res.setHeader('access-control-allow-methods','POST, OPTIONS');
+  res.setHeader('access-control-allow-headers','content-type');
+  res.setHeader('vary','Origin');
+}
+
 export default async function handler(req,res){
+  applyCors(req,res);
+  if(req.method==='OPTIONS')return sameOrigin(req)||trustedOrigin(req)?res.status(204).end():res.status(403).json({error:'Origin not allowed'});
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
-  if(!sameOrigin(req))return res.status(403).json({error:'Origin not allowed'});
+  if(!sameOrigin(req)&&!trustedOrigin(req))return res.status(403).json({error:'Origin not allowed'});
 
   const supabaseUrl=process.env.SUPABASE_URL||process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey=process.env.SUPABASE_SECRET_KEY;

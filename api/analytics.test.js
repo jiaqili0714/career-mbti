@@ -7,7 +7,9 @@ function response(){
     statusCode:200,
     payload:null,
     ended:false,
+    headers:{},
     status(code){this.statusCode=code;return this;},
+    setHeader(name,value){this.headers[name.toLowerCase()]=value;return this;},
     json(value){this.payload=value;this.ended=true;return this;},
     end(){this.ended=true;return this;},
   };
@@ -17,6 +19,14 @@ test('analytics endpoint rejects cross-origin writes',async()=>{
   const res=response();
   await handler({method:'POST',headers:{host:'career.example',origin:'https://spam.example'},body:{}},res);
   assert.equal(res.statusCode,403);
+});
+
+test('analytics endpoint allows the published Sites mirror through CORS',async()=>{
+  const res=response();
+  await handler({method:'OPTIONS',headers:{host:'career-mbti-beta.vercel.app',origin:'https://career-mbti.ggboy-313.chatgpt.site'}},res);
+  assert.equal(res.statusCode,204);
+  assert.equal(res.headers['access-control-allow-origin'],'https://career-mbti.ggboy-313.chatgpt.site');
+  assert.equal(res.headers['access-control-allow-methods'],'POST, OPTIONS');
 });
 
 test('analytics endpoint validates and forwards only coarse server-side geography',async()=>{
@@ -63,10 +73,11 @@ test('experiment endpoint accepts only the anonymous survey schema',async()=>{
   try{
     const res=response();
     await handler({
-      method:'POST',headers:{host:'career.example',origin:'https://career.example'},
+      method:'POST',headers:{host:'career-mbti-beta.vercel.app',origin:'https://career-mbti.ggboy-313.chatgpt.site'},
       body:{event:'experiment_response',responseId:'7f972a0a-98ee-4f2d-a2d7-0249a89c161f',sessionId:'d9428888-122b-4c59-9c30-8f3a64c8475e',attemptId:'6ba7b810-9dad-41d1-80b4-00c04f1e9cb7',resultType:'isfj',actualMbti:'enfp',mbtiConfidence:'likely',ageRange:'25_34',gender:'prefer_not',industry:'technology',careerStage:'3_5',workMode:'hybrid',roleLevel:'individual',language:'zh-CN'},
     },res);
     assert.equal(res.statusCode,204);
+    assert.equal(res.headers['access-control-allow-origin'],'https://career-mbti.ggboy-313.chatgpt.site');
     assert.equal(forwarded.url,'https://warehouse.example/rest/v1/rpc/record_experiment_response');
     assert.equal(forwarded.payload.p_actual_mbti,'ENFP');
     assert.equal(forwarded.payload.p_result_type,'ISFJ');

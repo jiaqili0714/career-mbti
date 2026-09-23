@@ -1,6 +1,6 @@
 const SESSION_KEY='career-mbti-analytics-session-v1';
 const ATTEMPT_KEY='career-mbti-analytics-attempt-v1';
-const API_PATH='/api/analytics';
+const PRIMARY_API='https://career-mbti-beta.vercel.app/api/analytics';
 
 let sessionId=null;
 let attemptId=null;
@@ -8,6 +8,10 @@ let activeMs=0;
 let activeSince=null;
 let heartbeatId=null;
 let initialized=false;
+
+function apiPath(){
+  return window.location.hostname.endsWith('.chatgpt.site')?PRIMARY_API:'/api/analytics';
+}
 
 function analyticsAllowed(){
   if(typeof window==='undefined')return false;
@@ -76,10 +80,10 @@ function send(event,{questionsAnswered=0,resultType='',final=false}={}){
     ...entryContext(),
   });
   if(final&&navigator.sendBeacon){
-    navigator.sendBeacon(API_PATH,new Blob([body],{type:'application/json'}));
+    navigator.sendBeacon(apiPath(),new Blob([body],{type:'application/json'}));
     return;
   }
-  fetch(API_PATH,{method:'POST',headers:{'content-type':'application/json'},body,keepalive:true}).catch(()=>{});
+  fetch(apiPath(),{method:'POST',headers:{'content-type':'application/json'},body,keepalive:true}).catch(()=>{});
 }
 
 export function initAnalytics(){
@@ -141,6 +145,6 @@ export async function submitExperimentResponse(response){
     roleLevel:clean(response.roleLevel,24),
     language:clean(document.documentElement.lang||navigator.language,16),
   };
-  const result=await fetch(API_PATH,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  const result=await fetch(apiPath(),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
   return result.ok?{responseId}:null;
 }
