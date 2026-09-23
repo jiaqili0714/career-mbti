@@ -9,6 +9,16 @@ export function getShareUrl(url=window.location.href){
   return clean.toString();
 }
 
+function escapeHtml(value){
+  return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+}
+
+export function getShareHtml(result,language='zh',shareUrl,imageDataUrl=''){
+  const image=imageDataUrl?`<p><img src="${escapeHtml(imageDataUrl)}" alt="${language==='en'?'Workplace personality result card':'职场异变结果卡'}" style="display:block;max-width:480px;width:100%;height:auto"></p>`:'';
+  const copy=getShareText(result,language).trim().split('\n').map(line=>`<p>${escapeHtml(line)}</p>`).join('');
+  return `<div>${image}${copy}<p><a href="${escapeHtml(shareUrl)}">${escapeHtml(shareUrl)}</a></p></div>`;
+}
+
 export function getXShareUrl(result,url,language='zh'){
   const text=language==='en'?`My workplace personality is ${result.name} (${result.type}).\n${result.verdict}\nWhat are you actually like at work? #OfficeSurvivalTest`:`我在公司里进化成了「${result.name}（${result.type}）」\n${result.verdict}\n28 道题，看看公司把你养成了什么东西。 #职场异变图鉴`;
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;

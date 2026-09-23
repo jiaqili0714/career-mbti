@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {ACHIEVEMENTS,evaluateAchievements} from './achievements.js';
 import {ARCHETYPES,CHOICE_REACTIONS,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
 import {EMPTY_SCORES,addQuestionScore,addScores,getChoiceScore,getResult,getType,isValidQuiz,createInitialQuiz,selectTiebreakers} from './engine.js';
-import {getShareText,getShareUrl,getXShareUrl} from './share.js';
+import {getShareHtml,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import {getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
 
 test('question bank has 20 core questions and an adaptive pool for every axis',()=>{
@@ -87,6 +87,8 @@ test('share helpers create platform-safe result copy and clean URLs',()=>{
   assert.match(getShareText(localizeArchetype({...result,index:10},'en'),'en'),/My workplace personality is/);
   assert.ok(!getShareText(result).includes('你也来接受公司物种鉴定'));
   assert.equal(getShareUrl('https://example.com/mbti.html#result'),'https://example.com/mbti.html');
+  const html=getShareHtml(result,'zh','https://example.com/?a=1&b=2','data:image/png;base64,card');
+  assert.match(html,/data:image\/png;base64,card/);assert.match(html,/职场异变结果卡/);assert.match(html,/a=1&amp;b=2/);
   const xUrl=new URL(getXShareUrl(result,'https://example.com/mbti.html'));
   assert.equal(xUrl.hostname,'twitter.com');assert.equal(xUrl.pathname,'/intent/tweet');
   assert.match(xUrl.searchParams.get('text'),/#职场异变图鉴/);assert.equal(xUrl.searchParams.get('url'),'https://example.com/mbti.html');

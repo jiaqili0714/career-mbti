@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {ACHIEVEMENTS,ACHIEVEMENT_BY_ID,evaluateAchievements} from './achievements.js';
 import {ARCHETYPES,CORE_QUESTIONS,TIEBREAKERS} from './data.js';
 import {QUIZ_SAVE_KEY,addQuestionScore,createInitialQuiz,getResult,isValidQuiz,selectTiebreakers} from './engine.js';
-import {createResultCard,getShareText,getShareUrl,getXShareUrl} from './share.js';
+import {createResultCard,getShareHtml,getShareText,getShareUrl,getXShareUrl} from './share.js';
 import {LANGUAGE_KEY,detectLanguage,getChoiceReaction,getUi,localizeAchievement,localizeArchetype,localizeQuestion} from './i18n.js';
 import {initAnalytics,trackQuestionAnswered,trackQuizComplete,trackQuizStart} from './analytics.js';
 import './mbti.css';
@@ -165,10 +165,25 @@ function ShareSheet({language,result,onClose}){
   function copyFallback(value){
     const input=document.createElement('textarea');input.value=value;input.setAttribute('readonly','');input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();const copied=document.execCommand('copy');input.remove();return copied;
   }
-  async function copyText(){
+  function toDataUrl(blob){
+    return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
+  }
+  async function copyShare(){
     const value=`${shareText}${shareUrl}`;
-    try{await navigator.clipboard.writeText(value);setStatus(tr('copyDone','完整文案和链接已复制。去群聊里投放这份职业污染报告吧。'));}
-    catch{copyFallback(value);setStatus(tr('copyDone','完整文案和链接已复制。去群聊里投放这份职业污染报告吧。'));}
+    setBusy(true);
+    try{
+      if(!cardFile||!navigator.clipboard?.write||!window.ClipboardItem)throw new Error('rich clipboard unavailable');
+      const imageDataUrl=await toDataUrl(cardFile);
+      const html=getShareHtml(result,language,shareUrl,imageDataUrl);
+      const plain=new Blob([value],{type:'text/plain'});
+      const rich=new Blob([html],{type:'text/html'});
+      try{await navigator.clipboard.write([new ClipboardItem({'text/plain':plain,'text/html':rich,'image/png':cardFile})]);}
+      catch{await navigator.clipboard.write([new ClipboardItem({'text/plain':plain,'text/html':rich})]);}
+      setStatus(tr('copyRichDone','结果卡、文案和链接已一起复制。直接去对话框里粘贴。'));
+    }catch{
+      try{await navigator.clipboard.writeText(value);}catch{copyFallback(value);}
+      setStatus(tr('copyTextOnly','当前浏览器只允许复制文字和链接；发图请用“分享我的结果”。'));
+    }finally{setBusy(false);}
   }
   function download(file){const link=document.createElement('a');link.href=URL.createObjectURL(file);link.download=file.name;link.click();window.setTimeout(()=>URL.revokeObjectURL(link.href),1000);}
   async function systemShare(){
@@ -197,7 +212,7 @@ function ShareSheet({language,result,onClose}){
       <header><div><span>SHARE_RESULT.EXE</span><h2 id="share-title">{tr('shareTitle','把工伤鉴定发出去')}</h2></div><button onClick={onClose} aria-label={tr('closeShare','关闭分享')}>×</button></header>
       <div className="share-layout">
         <div className="share-preview"><div className="share-preview-top">{tr('shareTop','职场异变图鉴')} <small>{tr('employeeFile','异常员工档案')}</small></div><div className="share-preview-person"><Portrait index={result.index}/><div><b>{result.name}</b><span>{result.type}</span><p>{result.verdict}</p></div></div><dl><div><dt>{tr('survive','生存方式')}</dt><dd>{result.survival}</dd></div><div><dt>{tr('drain','耗尽现场')}</dt><dd>{result.drain}</dd></div></dl><footer>{tr('shareFoot','本测试不改善命运，只负责命名。')}</footer></div>
-        <div className="share-controls"><p>{tr('shareHow','怎么发')}</p><div className="platform-grid"><button className="system-share" disabled={busy||!cardFile} onClick={systemShare}>{cardFile?tr('shareMine','分享我的结果'):tr('preparing','正在准备分享材料…')}</button><button disabled={busy} onClick={shareX}>{tr('postX','发布到 X')}</button></div><small className="share-note">{tr('shareNote','微信、朋友圈等，请在分享面板中选择。')}</small><div className="share-tools"><button disabled={busy||!cardFile} onClick={downloadCard}>{tr('saveCard','保存结果卡')}</button><button disabled={busy} onClick={copyText}>{tr('copyShare','复制分享内容')}</button></div><output aria-live="polite">{busy?tr('shareBusy','系统正在移交这份职业污染报告……'):status}</output></div>
+        <div className="share-controls"><p>{tr('shareHow','怎么发')}</p><div className="platform-grid"><button className="system-share" disabled={busy||!cardFile} onClick={systemShare}>{cardFile?tr('shareMine','分享我的结果'):tr('preparing','正在准备分享材料…')}</button><button disabled={busy} onClick={shareX}>{tr('postX','发布到 X')}</button></div><small className="share-note">{tr('shareNote','微信、朋友圈等，请在分享面板中选择。')}</small><div className="share-tools"><button disabled={busy||!cardFile} onClick={downloadCard}>{tr('saveCard','保存结果卡')}</button><button disabled={busy||!cardFile} onClick={copyShare}>{tr('copyShare','复制图文和链接')}</button></div><output aria-live="polite">{busy?tr('shareBusy','系统正在移交这份职业污染报告……'):status}</output></div>
       </div>
     </section>
   </div>
